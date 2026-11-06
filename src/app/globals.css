@@ -1,0 +1,716 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════ EntityGate design tokens: "Recessed Canvas" ═══════════════════════════
+   Three planes, read in one glance: a raised FRAME (sidebar + header, one L-shaped surface),
+   a recessed WELL (the page sits in it), and CARDS floating inside the well.
+   Glass is reserved for things that fly above all three: sign-in, dialogs, menus, palette, toasts.
+
+   Switch depth in one line: <html data-depth="a|b|c"> in src/app/layout.tsx.
+   Every physical direction here is logical; shadows flip through --dir. */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Direction multiplier for x-offsets and FLIP transforms. */
+  --dir: 1;
+
+  /* Spacing: 4/8pt scale. Tailwind's p-1 = 4px maps onto the same grid. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Layout */
+  --header-h: 56px; /* also the sidebar brand row, so they align */
+  --sidebar-w: 248px; /* 16 + 216 nav item + 16 */
+  --sidebar-rail: 72px; /* 16 + 40 hit area + 16 */
+  --sidebar-delta: calc(var(--sidebar-w) - var(--sidebar-rail));
+  --content-max: 1600px;
+  --scrollbar-w: 12px; /* gutter reserved in the well; 6px visible thumb */
+  --page-pad: clamp(16px, 0.75vw + 13px, 32px);
+  --card-gap: calc(var(--page-pad) / 2);
+  --card-pad: var(--space-5);
+
+  /* Radius: three levels only. A nested corner is outer minus the padding between them. */
+  --radius-control: 6px; /* inputs, buttons, menu rows */
+  --radius-card: 12px; /* cards, dialogs, popovers */
+  --radius-well: 20px; /* the one corner where the frame meets the well */
+
+  /* Motion */
+  --ease-shell: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-shell: 280ms;
+
+  /* Surfaces, light */
+  --frame: #fcfbf8;
+  --well: #ebe8e0;
+  --surface: #ffffff; /* cards */
+  --surface-2: #f3f1ec; /* hover, table head */
+  --surface-3: #e8e5dd;
+  --border: #e3dfd6;
+  --border-strong: #cfcabe;
+  --border-card: rgb(45 40 25 / 0.1);
+
+  --text: #14171c;
+  --text-muted: #565d69;
+  --text-faint: #606773; /* AA (4.5:1) on the well too, the darkest surface it sits on */
+
+  /* Brand: ink, with more chroma so light mode feels alive, and brass */
+  --primary: #1c4478;
+  --primary-hover: #153660;
+  --primary-soft: #e3ebf6;
+  --on-primary: #ffffff;
+  --accent: #a56f14;
+  --accent-soft: #f7ecd6;
+
+  --success: #1d7350;
+  --success-soft: #dff1e8;
+  --warning: #a35f00;
+  --warning-soft: #fbedd3;
+  --danger: #b5352a;
+  --danger-soft: #fae3df;
+  --info: #1d659e;
+  --info-soft: #dfedf8;
+
+  --ring: #1c4478;
+  --overlay: rgb(20 23 28 / 0.32);
+
+  --thumb: rgb(60 55 40 / 0.32);
+  --thumb-hover: rgb(60 55 40 / 0.5);
+
+  /* Shadow ink. --sa scales every alpha so depth reads the same in both themes. */
+  --shadow-rgb: 58 50 28;
+  --sa: 1;
+
+  /* Glass (floating layer only) */
+  --glass-bg: rgb(255 255 255 / 0.76);
+  --glass-border: rgb(255 255 255 / 0.65);
+  --glass-edge: rgb(45 40 25 / 0.12);
+  --glass-shadow: 0 1px 1px rgb(30 28 20 / 0.05), 0 8px 16px -6px rgb(30 28 20 / 0.12), 0 28px 56px -16px rgb(30 28 20 / 0.24);
+
+  --chart-1: #2e6fb7;
+  --chart-2: #6b7a8f;
+  --chart-3: #b5761a;
+  --chart-4: #4f8a68;
+  --chart-5: #b5654a;
+  --chart-6: #a9b4c2;
+
+  color-scheme: light;
+}
+
+[dir="rtl"] {
+  --dir: -1;
+}
+
+.dark {
+  /* The well stays darker than the frame: same depth logic as light. */
+  --frame: #1a1d23;
+  --well: #0c0e11;
+  --surface: #181b21;
+  --surface-2: #20242b;
+  --surface-3: #2a2f37;
+  --border: #272c34;
+  --border-strong: #3a404a;
+  --border-card: rgb(255 255 255 / 0.07);
+
+  --text: #eceef1;
+  --text-muted: #a4abb6;
+  --text-faint: #8a919c;
+
+  --primary: #93b7e8;
+  --primary-hover: #aecaef;
+  --primary-soft: #1b2a3e;
+  --on-primary: #0c0e11;
+  --accent: #dcab5f;
+  --accent-soft: #2d2415;
+
+  --success: #6cc598;
+  --success-soft: #142a20;
+  --warning: #e6ab4e;
+  --warning-soft: #2d2212;
+  --danger: #ec8074;
+  --danger-soft: #311916;
+  --info: #7fb6e6;
+  --info-soft: #152534;
+
+  --ring: #93b7e8;
+  --overlay: rgb(0 0 0 / 0.56);
+
+  --thumb: rgb(255 255 255 / 0.2);
+  --thumb-hover: rgb(255 255 255 / 0.34);
+
+  --shadow-rgb: 0 0 0;
+  --sa: 3;
+
+  --glass-bg: rgb(30 34 41 / 0.72);
+  --glass-border: rgb(255 255 255 / 0.1);
+  --glass-edge: rgb(0 0 0 / 0.4);
+  --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 16px -6px rgb(0 0 0 / 0.45), 0 28px 56px -16px rgb(0 0 0 / 0.7);
+
+  --chart-1: #5a93d8;
+  --chart-2: #8a97a8;
+  --chart-3: #b98a35;
+  --chart-4: #8fb39a;
+  --chart-5: #d58a6f;
+  --chart-6: #5d6878;
+
+  color-scheme: dark;
+}
+
+/* ─── Depth presets. Offsets multiply by --dir, so the light source flips in RTL. ─── */
+:root,
+[data-depth="b"] {
+  --well-inset:
+    inset calc(var(--dir) * 1px) 1px 0 rgb(var(--shadow-rgb) / calc(0.09 * var(--sa))),
+    inset calc(var(--dir) * 5px) 5px 10px -6px rgb(var(--shadow-rgb) / calc(0.14 * var(--sa))),
+    inset calc(var(--dir) * 16px) 16px 32px -22px rgb(var(--shadow-rgb) / calc(0.16 * var(--sa)));
+  --card-shadow: 0 1px 1px rgb(var(--shadow-rgb) / calc(0.04 * var(--sa))), 0 3px 8px -3px rgb(var(--shadow-rgb) / calc(0.08 * var(--sa)));
+  --sticky-shadow: 0 -8px 16px -10px rgb(var(--shadow-rgb) / calc(0.2 * var(--sa)));
+  --edge-shadow: 0 10px 18px -12px rgb(var(--shadow-rgb) / calc(0.3 * var(--sa)));
+}
+[data-depth="a"] {
+  --well-inset:
+    inset calc(var(--dir) * 1px) 1px 0 rgb(var(--shadow-rgb) / calc(0.07 * var(--sa))),
+    inset calc(var(--dir) * 3px) 3px 6px -4px rgb(var(--shadow-rgb) / calc(0.08 * var(--sa)));
+  --card-shadow: 0 1px 1px rgb(var(--shadow-rgb) / calc(0.03 * var(--sa)));
+  --sticky-shadow: 0 -6px 10px -8px rgb(var(--shadow-rgb) / calc(0.14 * var(--sa)));
+  --edge-shadow: 0 6px 12px -8px rgb(var(--shadow-rgb) / calc(0.2 * var(--sa)));
+}
+[data-depth="c"] {
+  --well-inset:
+    inset calc(var(--dir) * 1px) 1px 0 rgb(var(--shadow-rgb) / calc(0.14 * var(--sa))),
+    inset calc(var(--dir) * 8px) 8px 16px -8px rgb(var(--shadow-rgb) / calc(0.22 * var(--sa))),
+    inset calc(var(--dir) * 28px) 28px 48px -28px rgb(var(--shadow-rgb) / calc(0.26 * var(--sa)));
+  --card-shadow: 0 1px 2px rgb(var(--shadow-rgb) / calc(0.07 * var(--sa))), 0 8px 20px -8px rgb(var(--shadow-rgb) / calc(0.16 * var(--sa)));
+  --sticky-shadow: 0 -10px 20px -10px rgb(var(--shadow-rgb) / calc(0.3 * var(--sa)));
+  --edge-shadow: 0 14px 24px -14px rgb(var(--shadow-rgb) / calc(0.42 * var(--sa)));
+}
+
+@theme inline {
+  --color-frame: var(--frame);
+  --color-well: var(--well);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-card: var(--border-card);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --font-sans: var(--font-geist), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-geist), sans-serif;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+
+  /* Tailwind's rounded-md/lg/xl resolve to the three levels above. */
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-well);
+
+  --ease-out-quint: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-fade-in: fade-in var(--dur-base) var(--ease-out-quint);
+  --animate-fade-out: fade-out var(--dur-fast) ease-in;
+  --animate-pop-in: pop-in var(--dur-base) var(--ease-out-quint);
+  --animate-pop-out: pop-out var(--dur-fast) ease-in;
+  --animate-sheet-in: sheet-in var(--dur-shell) var(--ease-shell);
+  --animate-sheet-out: sheet-out var(--dur-base) ease-in;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-rise: rise 420ms var(--ease-shell) both;
+  --animate-shake: shake 360ms var(--ease-out-quint);
+
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes fade-out { from { opacity: 1 } to { opacity: 0 } }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(0.985) } to { opacity: 1; transform: none } }
+  @keyframes pop-out { from { opacity: 1; transform: none } to { opacity: 0; transform: translateY(2px) scale(0.99) } }
+  @keyframes sheet-in { from { transform: translateX(calc(var(--dir) * 100%)) } to { transform: none } }
+  @keyframes sheet-out { from { transform: none } to { transform: translateX(calc(var(--dir) * 100%)) } }
+  @keyframes shimmer { 0% { background-position: -400px 0 } 100% { background-position: 400px 0 } }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+  @keyframes shake {
+    20% { transform: translateX(-5px) }
+    45% { transform: translateX(4px) }
+    70% { transform: translateX(-2px) }
+    100% { transform: none }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--frame);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    font-feature-settings: "ss01", "cv11";
+  }
+  :lang(ar) body {
+    font-family: var(--font-arabic);
+    font-feature-settings: normal;
+  }
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--text);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .num,
+  td,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Codes and IDs always read left to right, even inside Arabic text. */
+  .ltr-code {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+}
+
+/* ═══════════════════════════ App shell ═══════════════════════════ */
+
+.shell {
+  --shell-side: var(--sidebar-w);
+  display: grid;
+  height: 100dvh;
+  /* clip, not hidden: hidden can still be scrolled by focus(), which would slide the whole frame sideways. */
+  overflow: clip;
+  background: var(--frame);
+  grid-template-areas:
+    "side head"
+    "side well";
+  grid-template-columns: var(--shell-side) minmax(0, 1fr);
+  grid-template-rows: var(--header-h) minmax(0, 1fr);
+}
+.shell[data-sidebar="collapsed"] {
+  --shell-side: var(--sidebar-rail);
+}
+
+/* Sidebar. The inner column keeps its full width and slides under the well (z-index),
+   so collapsing never reflows labels. The cell width is the only thing that changes. */
+.shell-side {
+  grid-area: side;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.shell-side-inner {
+  display: flex;
+  flex-direction: column;
+  inline-size: var(--sidebar-w);
+  block-size: 100%;
+}
+.nav-label {
+  transition: opacity var(--dur-base) var(--ease-shell);
+}
+.shell[data-sidebar="collapsed"] .nav-label {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.shell-head {
+  grid-area: head;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-inline: var(--page-pad);
+}
+
+/* Well: the frame element stays still and carries the rounded corner and the shadow;
+   the scroller inside it does the scrolling. */
+.well {
+  grid-area: well;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  background: var(--well);
+  border-start-start-radius: var(--radius-well);
+}
+/* Fills the gap at the trailing edge while the FLIP slide settles. */
+.well::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 100%;
+  inline-size: var(--sidebar-delta);
+  background: var(--well);
+}
+.well-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-start-start-radius: inherit;
+  scrollbar-gutter: stable;
+}
+/* Inset shadow sits above content, so scrolled cards pass under the frame's edge. */
+.well-depth {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-start-start-radius: inherit;
+  box-shadow: var(--well-inset);
+}
+/* Header shadow grows as the page scrolls under it. Opacity only. */
+.well-edge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 4;
+  block-size: 1px;
+  pointer-events: none;
+  box-shadow: var(--edge-shadow);
+  opacity: 0;
+  transition: opacity var(--dur-base) ease;
+}
+.shell[data-scrolled="true"] .well-edge {
+  opacity: 1;
+}
+
+/* FLIP: layout snaps to the end state once, then only transform runs. */
+@keyframes shell-slide-collapse {
+  from { transform: translateX(calc(var(--dir) * var(--sidebar-delta))) }
+  to { transform: none }
+}
+@keyframes shell-slide-expand {
+  from { transform: translateX(calc(var(--dir) * var(--sidebar-delta) * -1)) }
+  to { transform: none }
+}
+.shell[data-animating="collapse"] :is(.well, .head-start) {
+  animation: shell-slide-collapse var(--dur-shell) var(--ease-shell);
+}
+.shell[data-animating="expand"] :is(.well, .head-start) {
+  animation: shell-slide-expand var(--dur-shell) var(--ease-shell);
+}
+
+/* Page container: optically equal padding on all four sides.
+   The trailing side gives back the scrollbar gutter that sits next to it. */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
+  inline-size: 100%;
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  padding-block: var(--page-pad);
+  padding-inline-start: var(--page-pad);
+  padding-inline-end: max(var(--space-2), calc(var(--page-pad) - var(--scrollbar-w)));
+  gap: var(--card-gap);
+}
+/* Entrance: one pass, top to bottom. "both" holds the start state through the delay. */
+.page > * {
+  flex-shrink: 0; /* cards use overflow: clip, which would otherwise let flexbox squash them */
+  animation: rise 420ms var(--ease-shell) both;
+}
+.page > :nth-child(2) { animation-delay: 50ms }
+.page > :nth-child(3) { animation-delay: 100ms }
+.page > :nth-child(4) { animation-delay: 150ms }
+.page > :nth-child(n + 5) { animation-delay: 200ms }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
+  /* clip, not hidden: rounds children without becoming a scroll container, so sticky keeps working. */
+  overflow: clip;
+}
+.card-grid {
+  display: grid;
+  gap: var(--card-gap);
+}
+
+/* Well scrollbar: hidden until needed, inset from the rounded corner */
+@supports selector(::-webkit-scrollbar) {
+  .well-scroll::-webkit-scrollbar {
+    inline-size: var(--scrollbar-w);
+    width: var(--scrollbar-w);
+  }
+  .well-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: var(--radius-well) var(--space-2);
+  }
+  .well-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+  .well-scroll:hover::-webkit-scrollbar-thumb,
+  .shell[data-scrolling="true"] .well-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--thumb);
+  }
+  .well-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: var(--thumb-hover);
+  }
+}
+@supports not selector(::-webkit-scrollbar) {
+  .well-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .well-scroll:hover,
+  .shell[data-scrolling="true"] .well-scroll {
+    scrollbar-color: var(--thumb) transparent;
+  }
+}
+
+/* Smaller scrollers (popover lists, dialog bodies, the table bar): thin, no arrows. */
+@supports selector(::-webkit-scrollbar) {
+  :is(.scroll-thin, .table-hbar)::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  :is(.scroll-thin, .table-hbar)::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  :is(.scroll-thin, .table-hbar)::-webkit-scrollbar-thumb {
+    background: var(--thumb);
+    border-radius: 999px;
+  }
+  :is(.scroll-thin, .table-hbar)::-webkit-scrollbar-thumb:hover {
+    background: var(--thumb-hover);
+  }
+}
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-thin,
+  .table-hbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--thumb) transparent;
+  }
+}
+
+/* Table: horizontal scrollbar pinned above the sticky footer, never mid-table */
+.table-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.table-scroll::-webkit-scrollbar {
+  display: none;
+}
+.table-dock {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 2;
+  background: var(--surface);
+  transition: box-shadow var(--dur-base) ease;
+}
+.table-dock[data-stuck="true"] {
+  box-shadow: var(--sticky-shadow);
+}
+.table-hbar {
+  overflow-x: auto;
+  overflow-y: hidden;
+  block-size: 8px;
+}
+.table-hbar > div {
+  block-size: 1px;
+}
+
+/* ═══════════════════════════ Glass: floating layer only ═══════════════════════════ */
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  outline: 1px solid var(--glass-edge);
+  outline-offset: 0;
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  backdrop-filter: blur(22px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+}
+/* No blur support: go solid. Readability always wins over effect. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface);
+  }
+}
+
+/* ═══════════════════════════ Responsive shell ═══════════════════════════ */
+
+/* Touch devices use overlay scrollbars, so the gutter is zero and padding stays symmetrical. */
+@media (pointer: coarse) {
+  :root {
+    --scrollbar-w: 0px;
+  }
+}
+
+/* Tablet: fixed icon rail. The menu button opens the full sidebar as an overlay. */
+@media (max-width: 1023.98px) {
+  .shell,
+  .shell[data-sidebar="collapsed"] {
+    --shell-side: var(--sidebar-rail);
+  }
+  .shell .nav-label {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .shell-side-inner {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+  }
+  .shell[data-drawer="open"] .shell-side {
+    z-index: 30;
+  }
+  .shell[data-drawer="open"] .shell-side-inner {
+    background: var(--frame);
+    box-shadow: var(--glass-shadow);
+  }
+  .shell[data-drawer="open"] .nav-label {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Mobile: no rail. Sidebar is a drawer, the well runs edge to edge. */
+@media (max-width: 767.98px) {
+  .shell,
+  .shell[data-sidebar="collapsed"] {
+    grid-template-areas:
+      "head"
+      "well";
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shell-side {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 30;
+    inline-size: min(var(--sidebar-w), 86vw);
+    visibility: hidden;
+    transform: translateX(calc(var(--dir) * -100%));
+    transition:
+      transform var(--dur-shell) var(--ease-shell),
+      visibility 0s linear var(--dur-shell);
+  }
+  .shell-side-inner {
+    position: static;
+    inline-size: 100%;
+    background: var(--frame);
+  }
+  .shell[data-drawer="open"] .shell-side {
+    visibility: visible;
+    transform: none;
+    transition: transform var(--dur-shell) var(--ease-shell);
+  }
+  .well {
+    border-start-start-radius: 0;
+  }
+  .well::before {
+    display: none;
+  }
+  .shell-head {
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* ═══════════════════════════ Small shared pieces ═══════════════════════════ */
+
+@layer base {
+  .eyebrow {
+    color: var(--text-faint);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  :lang(ar) .eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+/* Instrument Serif has no Arabic. Arabic display text uses Plex at a heavier weight instead,
+   and Arabic has no true italics. Unlayered so it beats the font-display utility. */
+.font-display:lang(ar) {
+  font-family: var(--font-arabic);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+:lang(ar) em {
+  font-style: normal;
+}
+
+/* Sign-in field */
+.auth-field {
+  background:
+    radial-gradient(90% 70% at 15% 0%, #1f3d68 0%, transparent 70%),
+    linear-gradient(160deg, #122440 0%, #0b1526 100%);
+}
+.dark .auth-field {
+  background:
+    radial-gradient(90% 70% at 15% 0%, #16294a 0%, transparent 70%),
+    linear-gradient(160deg, #0c1626 0%, #070c15 100%);
+}
+.auth-arches {
+  inset-inline-end: -120px;
+}
+/* The card sits on a dark field, so light glass needs extra opacity to keep body text at AA. */
+.auth-card {
+  --glass-bg: rgb(255 255 255 / 0.88);
+}
+.dark .auth-card {
+  --glass-bg: rgb(30 34 41 / 0.72);
+}

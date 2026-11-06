@@ -1,0 +1,40 @@
+# Self-contained stack for staging or on-premises use. Requires a .env with the variables below.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: entitygate
+      POSTGRES_USER: entitygate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U entitygate"]
+      interval: 10s
+      retries: 5
+
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://entitygate:${POSTGRES_PASSWORD}@db:5432/entitygate
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
+      APP_TIMEZONE: Asia/Riyadh
+      CLAMAV_HOST: clamav
+    volumes:
+      - file-data:/data/storage
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:
+  file-data:

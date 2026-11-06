@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: entitygate
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      # Throwaway values for the disposable CI database only.
+      DATABASE_URL: postgresql://postgres:ci@localhost:5432/entitygate
+      BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      SEED_USER_PASSWORD: ci-only-password
+      E2E_BASE_URL: http://localhost:3000
+      # The suite signs in many times a minute; production keeps the default of 8.
+      AUTH_SIGNIN_RATE_LIMIT: "1000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma db seed
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - name: Start production server
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          (cd .next/standalone && PORT=3000 node server.js) &
+          npx --yes wait-on --timeout 60000 http://localhost:3000/api/health
+      - run: npm test
