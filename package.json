@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "db:bootstrap": "tsx prisma/seed.ts --bootstrap",
     "seed:demo": "tsx prisma/seed-demo.ts",
-    "db:clean-tests": "tsx scripts/clean-test-data.ts"
+    "db:clean-tests": "tsx scripts/clean-test-data.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",

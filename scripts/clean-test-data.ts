@@ -55,6 +55,7 @@ async function main() {
       await tx.rateCard.deleteMany({ where: { contract: byClient } });
       await tx.contract.deleteMany({ where: byClient });
       await tx.client.deleteMany({ where: { id: { in: clientIds } } });
+      await tx.$executeRaw`DELETE FROM attachment_blobs b WHERE NOT EXISTS (SELECT 1 FROM attachments a WHERE a.storage_key = b.key)`;
       await tx.payable.deleteMany({ where: { description: { startsWith: "E2E " } } });
       await tx.sponsor.deleteMany({ where: { name: { startsWith: "E2E " } } });
       await tx.expenseCategory.deleteMany({ where: { code: { startsWith: "E2E_" }, expenses: { none: {} } } });

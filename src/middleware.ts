@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-const PUBLIC = [/^\/login(\/|$)/, /^\/api\/auth\//, /^\/api\/health$/];
+const PUBLIC = [/^\/login(\/|$)/, /^\/api\/auth\//, /^\/api\/health$/, /^\/api\/cron\//];
 
 /** Per-request nonce: only scripts we rendered can run, which blunts any injected markup (XSS). */
 function contentSecurityPolicy(nonce: string) {

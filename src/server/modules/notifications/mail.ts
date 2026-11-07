@@ -1,4 +1,5 @@
 import "server-only";
+import { appUrl } from "@/lib/app-url";
 import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "@/server/db";
 import en from "../../../../messages/en.json";
@@ -27,7 +28,7 @@ export async function deliverEmail(notificationId: string, userId: string, title
   if (!user) return;
   const notif = en.notif as Record<string, string>;
   const subject = fill(notif[titleKey.replace("notif.", "")] ?? "EntityGate reminder", params);
-  const link = `${process.env.BETTER_AUTH_URL ?? ""}${href}`;
+  const link = `${appUrl() ?? ""}${href}`;
   try {
     await smtp.sendMail({ from: process.env.MAIL_FROM ?? "EntityGate <no-reply@entitygate.local>", to: user.email, subject, text: `${subject}\n\n${link}` });
     await db.notificationDelivery.create({ data: { notificationId, channel: "email", status: "sent", sentAt: new Date() } });
@@ -50,7 +51,7 @@ export async function sendDailyDigests() {
         from: process.env.MAIL_FROM ?? "EntityGate <no-reply@entitygate.local>",
         to: user.email,
         subject: `EntityGate: ${g._count} open reminders`,
-        text: `You have ${g._count} open reminders.\n\n${process.env.BETTER_AUTH_URL ?? ""}/notifications`,
+        text: `You have ${g._count} open reminders.\n\n${appUrl() ?? ""}/notifications`,
       })
       .then(() => sent++)
       .catch(() => undefined);

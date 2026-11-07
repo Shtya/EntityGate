@@ -486,7 +486,8 @@
     "payrollConfirmed": "This month's payroll is confirmed. Reopen it first.",
     "expenseBilled": "This cost is already on an invoice",
     "importHasErrors": "Some rows have problems. Nothing was changed.",
-    "categoryKindLocked": "This category has expenses, so its type can't change"
+    "categoryKindLocked": "This category has expenses, so its type can't change",
+    "fileTooLargeHosted": "Files must be 4 MB or smaller"
   },
   "roles": {
     "ADMIN": "System Administrator",

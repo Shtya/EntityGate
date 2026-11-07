@@ -1352,3 +1352,22 @@ model ExportLog {
   @@index([createdAt])
   @@map("export_logs")
 }
+
+/// Uploaded files, for hosting with no writable disk. See attachments/storage.ts.
+model AttachmentBlob {
+  key       String   @id
+  data      Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("attachment_blobs")
+}
+
+/// Better Auth's sign-in limits, shared across serverless instances.
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt @map("last_request")
+
+  @@map("rate_limits")
+}

@@ -3,11 +3,14 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
+import { appUrl, trustedOrigins } from "@/lib/app-url";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { db } from "@/server/db";
 
 export const auth = betterAuth({
   appName: "EntityGate",
+  baseURL: appUrl(),
+  trustedOrigins: trustedOrigins(),
   database: prismaAdapter(db, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
@@ -30,6 +33,8 @@ export const auth = betterAuth({
   },
   rateLimit: {
     enabled: true,
+    // In memory, each serverless instance would count separately and limit almost nothing.
+    storage: "database",
     window: 60,
     max: 60,
     customRules: {

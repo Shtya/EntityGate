@@ -23,6 +23,17 @@ describe.skipIf(!BASE || !canManage)("system settings", () => {
     expect(await db.auditEvent.count({ where: { action: "clear_denied", createdAt: { gte: new Date(Date.now() - 120_000) } } })).toBeGreaterThan(0);
   });
 
+  it("the daily job only answers to the cron secret", async () => {
+    const call = (auth?: string) => fetch(`${BASE}/api/cron/daily`, { headers: auth ? { Authorization: auth } : {} });
+    expect((await call()).status).toBe(401);
+    expect((await call("Bearer wrong")).status).toBe(401);
+    if (process.env.CRON_SECRET) {
+      const ok = await call(`Bearer ${process.env.CRON_SECRET}`);
+      expect(ok.status).toBe(200);
+      expect((await ok.json()).data.reminders).toBeDefined();
+    }
+  });
+
   it("an admin can clear someone's lost 2FA, and the person must sign in again", async () => {
     const admin = await session.admin();
     const target = await db.user.findUniqueOrThrow({ where: { email: "auditor@entitygate.test" } });

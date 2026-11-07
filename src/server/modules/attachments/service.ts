@@ -6,10 +6,12 @@ import { forbidden, invalid, notFound } from "@/server/errors";
 import { getClientScope } from "@/server/rbac/actor";
 import { can, canAny, inScope, type Actor } from "@/server/rbac/policy";
 import type { PermissionKey } from "@/server/rbac/catalog";
+import { isServerless } from "@/lib/app-url";
 import { storage } from "./storage";
 import { scanBuffer } from "./scan";
 
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+/** Vercel rejects request bodies over 4.5 MB before they reach the app. */
+export const MAX_UPLOAD_BYTES = (isServerless() ? 4 : 15) * 1024 * 1024;
 
 export const ALLOWED_MIME: Record<string, string> = {
   "application/pdf": "pdf",
@@ -46,7 +48,7 @@ const UPLOAD_PERMISSIONS: PermissionKey[] = ["document:manage", "task:update", "
 export async function saveAttachment(actor: Actor, file: File) {
   if (!canAny(actor, UPLOAD_PERMISSIONS)) throw forbidden();
   if (file.size === 0) throw invalid("errors.fileEmpty");
-  if (file.size > MAX_UPLOAD_BYTES) throw invalid("errors.fileTooLarge");
+  if (file.size > MAX_UPLOAD_BYTES) throw invalid(isServerless() ? "errors.fileTooLargeHosted" : "errors.fileTooLarge");
   const ext = ALLOWED_MIME[file.type];
   if (!ext) throw invalid("errors.fileType");
 

@@ -1,12 +1,11 @@
 import "server-only";
-import { rm } from "node:fs/promises";
-import path from "node:path";
 import { z } from "zod";
 import { db, type Tx } from "@/server/db";
 import { writeAudit } from "@/server/audit";
 import { conflict, forbidden, invalid } from "@/server/errors";
 import { isAdmin, type Actor } from "@/server/rbac/policy";
 import { verifyPassword } from "@/lib/password";
+import { storage } from "@/server/modules/attachments/storage";
 
 export const CONFIRM_PHRASE = "CLEAR";
 const CLEARED_ACTION = "system_data_cleared";
@@ -28,7 +27,7 @@ const BUSINESS_TABLES = [
   "escalation_updates", "escalations", "case_comments", "case_events", "cases", "task_checklist_items", "task_comments", "tasks",
   "workflow_steps", "lifecycle_workflows", "documents", "compensations", "allocations", "employees",
   "rate_cards", "contracts", "account_assignments", "client_contacts", "clients",
-  "attachments", "number_sequences", "team_members", "teams",
+  "attachments", "attachment_blobs", "number_sequences", "team_members", "teams",
 ] as const;
 
 /** Runs inside the caller's transaction, so a failure anywhere leaves the data exactly as it was. */
@@ -78,7 +77,6 @@ export async function clearDemoData(actor: Actor, input: z.infer<typeof clearDat
   );
 
   // Files come last: the data is already gone, and a stray file left behind is harmless.
-  const root = path.resolve(process.env.STORAGE_DIR || "./storage");
-  await Promise.allSettled(result.storageKeys.map((key) => rm(path.resolve(root, key), { force: true })));
+  await Promise.allSettled(result.storageKeys.map((key) => storage.delete(key)));
   return { clients: result.clients, employees: result.employees, invoices: result.invoices, users: result.users };
 }

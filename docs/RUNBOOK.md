@@ -31,11 +31,49 @@ To let the company look around before starting for real, deploy against the data
 - Change the administrator's password first. Every demo account shares one known password, so keep the site private.
 - When they're ready, an administrator opens **Settings > Clear all demo data**. Only their account, the setup and the reference lists remain.
 
-The app needs a long-running Node server and a disk that survives restarts for uploads, because reminders run inside the process and files are stored in `STORAGE_DIR`. Serverless hosting doesn't fit without changing both.
+## Deploying on Vercel
+
+The app detects Vercel and adapts on its own:
+
+| Concern | On Vercel | On a normal server |
+|---|---|---|
+| Database | Supabase's transaction pooler (port 6543), 3 connections per instance | Whatever `DATABASE_URL` says, 5 connections |
+| Reminders | Vercel Cron calls `/api/cron/daily` once a day, at 08:00 Riyadh | Hourly, inside the app |
+| Uploaded files | In the database, 4 MB each | On disk (`STORAGE_DIR`), 15 MB each |
+
+`vercel.json` runs the app in London (`lhr1`), next to the database. Moving the database means changing this too, because every page makes many database calls.
+
+Set these under **Project > Settings > Environment Variables**, then redeploy:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The Supabase pooler URL. Port 5432 is fine; the app switches it. |
+| `BETTER_AUTH_SECRET` | A long random string |
+| `ENCRYPTION_KEY` | 64 hex characters: `openssl rand -hex 32`. **Must match the value already used on this database**, or stored IDs can't be read. |
+| `CRON_SECRET` | A long random string: `openssl rand -hex 32`. Without it, the daily job refuses to run. |
+| `BETTER_AUTH_URL` | Only for a custom domain, such as `https://app.example.com`. |
+| `SMTP_URL`, `MAIL_FROM`, `COMPANY_*` | As for any deployment |
+
+Don't set `AUTH_SIGNIN_RATE_LIMIT` or any `SEED_*` value there.
+
+**Migrations don't run during deployment.** Run this from your machine before deploying a version with new ones:
+
+```bash
+npm run db:deploy
+```
+
+It needs the session pooler (port 5432), so an old deployment holding all its connections will block it. Redeploying fixes that.
+
+**Limits on Vercel:**
+
+- Hobby plans allow one cron run a day, so overdue alerts can be up to a day late. On Pro, change the schedule in `vercel.json` to `0 * * * *` for hourly.
+- Uploads over 4 MB are refused, because Vercel caps request size at 4.5 MB.
+- Heavy runs must finish within the function time limit. A billing run for hundreds of clients may need Pro's longer limit.
+- The general API rate limit counts per instance. The sign-in limit is shared across instances.
 
 ## Database connections
 
-The app opens up to `DB_POOL_SIZE` connections (default 5) plus 3 for the scheduler, per instance. Supabase's session pooler allows 15 in total, and going over it locks out every client with `EMAXCONNSESSION`. Keep the sum under the limit, or use a larger pool size if you run more instances.
+Outside Vercel, the app opens up to `DB_POOL_SIZE` connections (default 5) plus 3 for the scheduler, per instance. Supabase's session pooler allows 15 in total, and going over it locks out every client with `EMAXCONNSESSION`. Keep the sum under the limit, or use a larger pool size if you run more instances.
 
 ## Backups
 
