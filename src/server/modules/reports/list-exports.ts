@@ -82,6 +82,9 @@ export const LIST_EXPORTS: Record<string, ListExport<unknown>> = {
     columns: [
       { label: "reports.caseNumber", value: (r) => r.number },
       { label: "tasks.task", value: (r) => r.title },
+      { label: "tasks.categories", value: (r) => r.categories.map((c) => c.category.name).join("، ") || null },
+      { label: "tasks.hrRep", value: (r) => r.hrRep?.name ?? null },
+      { label: "tasks.accountManager", value: (r) => r.accountManager?.name ?? null },
       { label: "employees.client", value: (r) => r.client?.displayName ?? null },
       { label: "tasks.owner", value: (r) => r.owner.name },
       { label: "tasks.due", type: "date", value: (r) => r.dueAt },

@@ -390,7 +390,9 @@
   "select": {
     "placeholder": "Select…",
     "search": "Search…",
-    "empty": "No results"
+    "empty": "No results",
+    "chosen": "{count} selected",
+    "remove": "Remove {label}"
   },
   "date": {
     "placeholder": "Pick a date",
@@ -573,7 +575,8 @@
     "payable:read": "View what the company owes",
     "payable:manage": "Add and settle payables",
     "system:reset": "Clear demo data (administrators only)",
-    "price_list:manage": "Edit the service price list"
+    "price_list:manage": "Edit the service price list",
+    "task_category:manage": "Add, rename and remove task categories"
   },
   "access": {
     "title": "Permissions for this person",
@@ -703,11 +706,12 @@
       "LOW": "Low"
     },
     "TaskStatus": {
-      "TODO": "To do",
+      "TODO": "Not started",
       "IN_PROGRESS": "In progress",
-      "BLOCKED": "Blocked",
+      "BLOCKED": "On hold",
       "DONE": "Done",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "WAITING_FINANCE": "Waiting finance"
     },
     "Recurrence": {
       "NONE": "Doesn't repeat",
@@ -827,6 +831,10 @@
       "PER_EMPLOYEE": "Per employee",
       "PER_MONTH": "Per month",
       "PER_YEAR": "Per year"
+    },
+    "TaskKind": {
+      "CLIENT": "Client",
+      "INTERNAL": "Internal"
     }
   },
   "clients": {
@@ -1082,7 +1090,7 @@
     "internal": "Internal",
     "start": "Start",
     "done": "Mark done",
-    "block": "Blocked",
+    "block": "Put on hold",
     "reopen": "Reopen",
     "reassign": "Reassign",
     "nothing": "Nothing here",
@@ -1090,7 +1098,55 @@
     "emptyBody": "New tasks will show up here.",
     "commentsHint": "Notes and completion evidence.",
     "createdBy": "Created by",
-    "completedAt": "Completed"
+    "completedAt": "Completed",
+    "formHint": "Pick the services first: the task's name fills in from them.",
+    "type": "Task type",
+    "categories": "Categories",
+    "categoriesChosen": "{count} chosen",
+    "noCategories": "No categories yet. Add them from Task categories.",
+    "titleAuto": "Filled from the categories you pick. You can change it.",
+    "titlePlaceholder": "e.g. Iqama renewal, Ismail, ID 2051125022",
+    "idReminder": "Include the employee's name or ID number, so the request can be handled quickly and correctly.",
+    "employees": "Employees",
+    "onlyMe": "Only me",
+    "onlyMeHint": "Assigned to you and visible only to you.",
+    "onlyMeTab": "Only me",
+    "hrRep": "HR representative",
+    "accountManager": "Account manager",
+    "nobody": "Nobody",
+    "noClient": "No client",
+    "holdReason": "Reason for hold",
+    "holdHint": "Say what it's waiting on, so others know.",
+    "clientEmail": "Client email",
+    "financeRequired": "Needs payment",
+    "financeRequiredHint": "When done, it waits for Finance before closing.",
+    "financePending": "Waiting for Finance",
+    "financeCleared": "Paid, confirmed {date}",
+    "confirmPayment": "Confirm payment",
+    "confirmPaymentTitle": "Confirm payment and close?",
+    "confirmPaymentBody": "The task is marked done.",
+    "waitingFinance": "Waiting finance",
+    "created": "Task created",
+    "saved": "Task saved",
+    "edit": "Edit task",
+    "anyStatus": "Any status",
+    "allCategories": "All categories",
+    "anyone": "Anyone",
+    "people": "People",
+    "ownerShort": "Assigned",
+    "hrRepShort": "HR",
+    "amShort": "AM",
+    "dueOn": "Due {date}",
+    "overdueBadge": "Overdue",
+    "reasonLabel": "Reason: {reason}",
+    "archivedCategoryFilter": "Filtered by an archived category.",
+    "stat_total": "Total",
+    "stat_done": "Done",
+    "stat_inProgress": "In progress",
+    "stat_waitingFinance": "Waiting finance",
+    "stat_notStarted": "Not started",
+    "stat_onHold": "On hold",
+    "stat_overdue": "Overdue"
   },
   "cases": {
     "title": "Requests & cases",
@@ -1469,5 +1525,29 @@
     "emptyTitle": "No services priced yet",
     "emptyBody": "Add each service you offer with its price.",
     "emptyBodyReadOnly": "Finance adds services and their prices here."
+  },
+  "taskCategories": {
+    "title": "Task categories",
+    "description": "The services a task can be about. Picking one on a new task fills in its name.",
+    "name": "Name",
+    "add": "Add category",
+    "addHint": "A new service people can pick",
+    "added": "Category added",
+    "rename": "Rename category",
+    "counts": "{open} open · {total} in total",
+    "taskCount": "{count, plural, =0 {no tasks} =1 {1 task} other {# tasks}}",
+    "newTask": "New task",
+    "removeTitle": "Remove “{name}”?",
+    "removeUsed": "{count, plural, =1 {1 task uses it} other {# tasks use it}}, so it will be archived: those tasks keep it, and it stops appearing on new tasks. You can restore it later.",
+    "removeUnused": "No task uses it, so it will be deleted.",
+    "archived": "Category archived",
+    "deleted": "Category deleted",
+    "archivedTitle": "Archived categories",
+    "restore": "Restore",
+    "restored": "Category restored",
+    "duplicate": "A category with this name already exists",
+    "unavailable": "One of the categories is no longer available",
+    "emptyTitle": "No categories yet",
+    "emptyBody": "An administrator adds them here."
   }
 }

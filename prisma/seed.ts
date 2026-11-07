@@ -96,6 +96,16 @@ async function seedReferenceData() {
     await db.expenseCategory.upsert({ where: { code: e.code }, update: data, create: { code: e.code, ...data } });
   }
 
+  // Task categories from the client's old task system. Only added when missing, so edits made in the app stay.
+  const taskCategories = [
+    "JOE13 ENTITY GATE REQUEST", "تجديد اقامة", "نقل كفالة", "اصدار تأشيرة خروج و عودة", "تغير مهنة", "طباعة الاقامة",
+    "اصدار عقد اجير", "اصدار تأشيرة عمل", "اصدار مخالصة عمل", "اصدار نموذج سلفة", "تصديق غرفة تجارية", "اصدار نموذج اجازة",
+    "اصدار تعريف راتب مع تصديق غرفة تجارية", "خطاب دخول الفرع", "طلب توظيف", "طلب انهاء عمل",
+  ];
+  if ((await db.taskCategory.count()) === 0) {
+    await db.taskCategory.createMany({ data: taskCategories.map((name, i) => ({ name, sortOrder: i + 1 })), skipDuplicates: true });
+  }
+
   await db.sponsor.upsert({
     where: { name: "EntityGate" },
     update: {},

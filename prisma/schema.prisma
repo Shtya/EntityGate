@@ -72,6 +72,8 @@ model User {
   permissionOverrides  UserPermission[]
 
   @@map("users")
+  tasksAsHrRep          Task[] @relation("TaskHrRep")
+  tasksAsAccountManager Task[] @relation("TaskAccountManager")
 }
 
 model Session {
@@ -539,6 +541,7 @@ model Employee {
   @@index([classification])
   @@index([sponsorId])
   @@map("employees")
+  taskLinks     TaskEmployee[]
 }
 
 /// Effective-dated placement of an employee on a client (BR-01).
@@ -703,6 +706,7 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   BLOCKED
+  WAITING_FINANCE
   DONE
   CANCELLED
 }
@@ -730,6 +734,19 @@ model Task {
   createdBy      User       @relation("TaskCreator", fields: [createdById], references: [id])
   comments       TaskComment[]
   checklist      TaskChecklistItem[]
+  categories     TaskCategoryLink[]
+  employees      TaskEmployee[]
+  hrRepId          String?   @map("hr_rep_id")
+  hrRep            User?     @relation("TaskHrRep", fields: [hrRepId], references: [id])
+  accountManagerId String?   @map("account_manager_id")
+  accountManager   User?     @relation("TaskAccountManager", fields: [accountManagerId], references: [id])
+  /// Visible only to the person who created it and the assignee (plus administrators).
+  onlyMe           Boolean   @default(false) @map("only_me")
+  clientEmail      String?   @map("client_email")
+  /// Needs payment handled before it can be closed: done moves it to WAITING_FINANCE.
+  financeRequired  Boolean   @default(false) @map("finance_required")
+  financeClearedAt DateTime? @map("finance_cleared_at")
+  holdReason       String?   @map("hold_reason")
   archivedAt     DateTime?  @map("archived_at")
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")
@@ -739,6 +756,8 @@ model Task {
   @@index([employeeId])
   @@index([caseId])
   @@index([createdById])
+  @@index([hrRepId])
+  @@index([accountManagerId])
   @@map("tasks")
 }
 
@@ -1393,4 +1412,38 @@ model ServicePrice {
   updatedAt DateTime    @updatedAt @map("updated_at")
 
   @@map("service_prices")
+}
+
+/// The client's task "services" (أجزاء التاسك). Managed in the app; archived rather than deleted once used.
+model TaskCategory {
+  id         String             @id @default(cuid())
+  name       String             @unique
+  sortOrder  Int                @default(0) @map("sort_order")
+  archivedAt DateTime?          @map("archived_at")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  tasks      TaskCategoryLink[]
+
+  @@map("task_categories")
+}
+
+model TaskCategoryLink {
+  taskId     String       @map("task_id")
+  categoryId String       @map("category_id")
+  task       Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  category   TaskCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@id([taskId, categoryId])
+  @@index([categoryId])
+  @@map("task_category_links")
+}
+
+model TaskEmployee {
+  taskId     String   @map("task_id")
+  employeeId String   @map("employee_id")
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, employeeId])
+  @@index([employeeId])
+  @@map("task_employees")
 }

@@ -5,5 +5,5 @@ import { setTaskStatus } from "@/server/modules/operations/service";
 export const POST = apiRoute({
   permission: "task:update",
   body: taskStatusSchema,
-  handler: ({ actor, body, params }) => setTaskStatus(actor, String(params.id), body.status),
+  handler: ({ actor, body, params }) => setTaskStatus(actor, String(params.id), body.status, body.reason),
 });

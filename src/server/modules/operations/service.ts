@@ -1,10 +1,10 @@
 import "server-only";
 import type { CaseStage, Prisma } from "@prisma/client";
 import type { z } from "zod";
-import { db } from "@/server/db";
+import { db, type Tx } from "@/server/db";
 import { writeAudit } from "@/server/audit";
 import { forbidden, invalid, notFound } from "@/server/errors";
-import { can, inScope, type Actor } from "@/server/rbac/policy";
+import { can, inScope, isAdmin, type Actor } from "@/server/rbac/policy";
 import { getClientScope } from "@/server/rbac/actor";
 import { dateOrNull, nextNumber, pad } from "@/server/util";
 import { PAGE_SIZE } from "@/server/validation";
@@ -36,71 +36,180 @@ const OPEN_TASK = ["TODO", "IN_PROGRESS", "BLOCKED"] as const;
 
 // ─────────────────────────── Tasks ───────────────────────────
 
+/**
+ * Who sees a task: anyone named on it (assignee, creator, HR rep, account manager), anyone whose
+ * clients it belongs to, and with task:read_all everyone. "Only me" tasks narrow that to the creator
+ * and assignee; administrators still see everything.
+ */
+async function taskVisibility(actor: Actor): Promise<Prisma.TaskWhereInput> {
+  const named: Prisma.TaskWhereInput[] = [{ ownerId: actor.id }, { createdById: actor.id }, { hrRepId: actor.id }, { accountManagerId: actor.id }];
+  const privateOk: Prisma.TaskWhereInput = isAdmin(actor) ? {} : { OR: [{ onlyMe: false }, { ownerId: actor.id }, { createdById: actor.id }] };
+  if (can(actor, "task:read_all")) return privateOk;
+  const scope = await getClientScope();
+  const reach: Prisma.TaskWhereInput = scope.kind === "all" ? {} : { OR: [...named, { clientId: { in: scope.clientIds } }] };
+  return { AND: [privateOk, reach] };
+}
+
+const taskInclude = {
+  client: { select: { id: true, displayName: true } },
+  owner: { select: { id: true, name: true } },
+  hrRep: { select: { id: true, name: true } },
+  accountManager: { select: { id: true, name: true } },
+  categories: { select: { category: { select: { id: true, name: true } } } },
+} satisfies Prisma.TaskInclude;
+
 /** TSK-03: "team" and "all" are widened views, so they need task:read_all. */
 export async function listTasks(actor: Actor, q: ListTasksQuery) {
   const wide = can(actor, "task:read_all");
   const view = !wide && (q.view === "team" || q.view === "all") ? "mine" : q.view;
-  const base: Prisma.TaskWhereInput = {
+  const filters: Prisma.TaskWhereInput = {
     archivedAt: null,
     status: q.status,
     clientId: q.client || undefined,
+    ...(q.owner ? { ownerId: q.owner } : {}),
+    ...(q.category ? { categories: { some: { categoryId: q.category } } } : {}),
     ...(q.q ? { OR: [{ title: { contains: q.q, mode: "insensitive" } }, { number: { contains: q.q, mode: "insensitive" } }] } : {}),
-    ...(view === "mine" ? { ownerId: actor.id } : {}),
-    ...(view === "team" ? { status: q.status ?? { in: [...OPEN_TASK] } } : {}),
-    ...(view === "overdue" ? { status: { in: [...OPEN_TASK] }, dueAt: { lt: new Date() } } : {}),
-    ...(view === "mine" && !q.status ? { status: { in: [...OPEN_TASK] } } : {}),
   };
-  const where = (wide ? base : await visibility(actor, base)) as Prisma.TaskWhereInput;
-  const take = q.layout === "board" ? 200 : PAGE_SIZE;
+  const views: Record<string, Prisma.TaskWhereInput> = {
+    mine: { OR: [{ ownerId: actor.id }, { hrRepId: actor.id }, { accountManagerId: actor.id }], ...(q.status ? {} : { status: { in: [...OPEN_TASK] } }) },
+    onlyMe: { onlyMe: true, OR: [{ ownerId: actor.id }, { createdById: actor.id }] },
+    team: q.status ? {} : { status: { in: [...OPEN_TASK] } },
+    overdue: { status: { in: [...OPEN_TASK] }, dueAt: { lt: new Date() } },
+    finance: { status: "WAITING_FINANCE" },
+    all: {},
+  };
+  const where: Prisma.TaskWhereInput = { AND: [filters, views[view], await taskVisibility(actor)] };
+  const board = q.layout === "board";
   const [rows, total] = await Promise.all([
     db.task.findMany({
       where,
       orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
-      skip: q.layout === "board" ? 0 : (q.page - 1) * PAGE_SIZE,
-      take,
-      include: { client: { select: { id: true, displayName: true } }, owner: { select: { id: true, name: true } } },
+      skip: board ? 0 : (q.page - 1) * PAGE_SIZE,
+      take: board ? 200 : PAGE_SIZE,
+      include: taskInclude,
     }),
     db.task.count({ where }),
   ]);
   return { rows, total, page: q.page, view };
 }
 
+/** The numbers across the top of the tasks page, over everything this person can see. */
+export async function taskStats(actor: Actor) {
+  const visible: Prisma.TaskWhereInput = { AND: [{ archivedAt: null }, await taskVisibility(actor)] };
+  const [byStatus, overdue] = await Promise.all([
+    db.task.groupBy({ by: ["status"], where: visible, _count: true }),
+    db.task.count({ where: { AND: [visible, { status: { in: [...OPEN_TASK] }, dueAt: { lt: new Date() } }] } }),
+  ]);
+  const n = (s: string) => byStatus.find((r) => r.status === s)?._count ?? 0;
+  return {
+    total: byStatus.reduce((a, r) => a + r._count, 0),
+    done: n("DONE"),
+    inProgress: n("IN_PROGRESS"),
+    waitingFinance: n("WAITING_FINANCE"),
+    notStarted: n("TODO"),
+    onHold: n("BLOCKED"),
+    overdue,
+  };
+}
+
+async function activeUsers(ids: (string | null | undefined)[]) {
+  const wanted = [...new Set(ids.filter((v): v is string => Boolean(v)))];
+  if (!wanted.length) return;
+  const found = await db.user.count({ where: { id: { in: wanted }, status: "ACTIVE" } });
+  if (found !== wanted.length) throw invalid("errors.validation", [{ path: "ownerId", message: "errors.userNotFound" }]);
+}
+
+async function activeCategories(ids: string[]) {
+  if (!ids.length) return;
+  const found = await db.taskCategory.count({ where: { id: { in: ids }, archivedAt: null } });
+  if (found !== ids.length) throw invalid("errors.validation", [{ path: "categoryIds", message: "taskCategories.unavailable" }]);
+}
+
+/** Validates the form and turns it into the columns both create and edit write. */
+async function taskData(actor: Actor, input: TaskInput) {
+  const employeeIds = [...new Set([...(input.employeeIds ?? []), ...(input.employeeId ? [input.employeeId] : [])])];
+  const scope = await getClientScope();
+  if (input.clientId && !inScope(scope, input.clientId)) throw forbidden();
+  for (const id of employeeIds) await assertEmployeeAccess(id, scope);
+  const ownerId = input.onlyMe && !input.ownerId ? actor.id : input.ownerId!;
+  await activeUsers([ownerId, input.hrRepId, input.accountManagerId]);
+  await activeCategories(input.categoryIds ?? []);
+  const kind = input.type ?? (input.clientId || employeeIds.length ? "CLIENT" : "INTERNAL");
+  return {
+    employeeIds,
+    categoryIds: input.categoryIds ?? [],
+    data: {
+      title: input.title,
+      description: input.description,
+      kind,
+      clientId: input.clientId ?? null,
+      employeeId: employeeIds[0] ?? null,
+      caseId: input.caseId ?? null,
+      ownerId,
+      hrRepId: input.hrRepId ?? null,
+      // Internal work has no account manager in the client's process.
+      accountManagerId: kind === "INTERNAL" ? null : (input.accountManagerId ?? null),
+      onlyMe: Boolean(input.onlyMe),
+      clientEmail: input.clientEmail ?? null,
+      dueAt: dateOrNull(input.dueAt),
+      priority: input.priority,
+      financeRequired: Boolean(input.financeRequired),
+      recurrenceRule: input.recurrence && input.recurrence !== "NONE" ? input.recurrence : null,
+    } satisfies Prisma.TaskUncheckedUpdateInput,
+  };
+}
+
+function notifyAssignee(tx: Tx, userId: string, actorId: string, task: { id: string; number: string; title: string }) {
+  if (userId === actorId) return;
+  return tx.notification.create({
+    data: { userId, entityType: "task", entityId: task.id, title: "notif.taskAssigned", body: JSON.stringify({ number: task.number, title: task.title }), href: `/tasks/${task.id}`, severity: "MEDIUM", dedupeKey: `task-assigned:${task.id}:${userId}:${Date.now()}` },
+  });
+}
+
 export async function createTask(actor: Actor, input: TaskInput) {
-  await assertLinks(input);
-  await activeOwner(input.ownerId);
+  const { data, employeeIds, categoryIds } = await taskData(actor, input);
+  const status = input.status ?? "TODO";
   return db.$transaction(async (tx) => {
     const number = `TSK-${pad(await nextNumber(tx, "TSK"))}`;
     const task = await tx.task.create({
       data: {
+        ...data,
         number,
-        title: input.title,
-        description: input.description,
-        kind: input.clientId || input.employeeId ? "CLIENT" : "INTERNAL",
-        clientId: input.clientId,
-        employeeId: input.employeeId,
-        caseId: input.caseId,
-        ownerId: input.ownerId,
         createdById: actor.id,
-        dueAt: dateOrNull(input.dueAt),
-        priority: input.priority,
-        recurrenceRule: input.recurrence && input.recurrence !== "NONE" ? input.recurrence : null,
+        status,
+        holdReason: status === "BLOCKED" ? input.holdReason : null,
+        categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
+        employees: { create: employeeIds.map((employeeId) => ({ employeeId })) },
       },
     });
-    if (input.ownerId !== actor.id) {
-      await tx.notification.create({
-        data: { userId: input.ownerId, entityType: "task", entityId: task.id, title: "notif.taskAssigned", body: JSON.stringify({ number, title: input.title }), href: `/tasks/${task.id}`, severity: input.priority === "URGENT" ? "HIGH" : "MEDIUM", dedupeKey: `task-assigned:${task.id}:${input.ownerId}` },
-      });
-    }
-    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: task.id, action: "create", after: { name: number, ownerId: input.ownerId } });
+    await notifyAssignee(tx, data.ownerId, actor.id, task);
+    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: task.id, action: "create", after: { name: number, ownerId: data.ownerId, categories: categoryIds.length } });
     return { id: task.id };
   });
 }
 
+export async function updateTask(actor: Actor, id: string, input: TaskInput) {
+  const before = await loadTask(actor, id);
+  const { data, employeeIds, categoryIds } = await taskData(actor, input);
+  await db.$transaction(async (tx) => {
+    await tx.taskCategoryLink.deleteMany({ where: { taskId: id } });
+    await tx.taskEmployee.deleteMany({ where: { taskId: id } });
+    await tx.task.update({
+      where: { id },
+      data: { ...data, categories: { create: categoryIds.map((categoryId) => ({ categoryId })) }, employees: { create: employeeIds.map((employeeId) => ({ employeeId })) } },
+    });
+    if (data.ownerId !== before.ownerId) await notifyAssignee(tx, data.ownerId, actor.id, before);
+    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: id, action: "update", before: { title: before.title, ownerId: before.ownerId }, after: { title: data.title, ownerId: data.ownerId } });
+  });
+  return { id };
+}
+
 async function loadTask(actor: Actor, id: string) {
-  const task = await db.task.findFirst({ where: { id, archivedAt: null } });
+  const task = await db.task.findFirst({ where: { AND: [{ id, archivedAt: null }] } });
   if (!task) throw notFound();
-  if (task.ownerId === actor.id || task.createdById === actor.id || can(actor, "task:read_all")) return task;
-  if (!inScope(await getClientScope(), task.clientId)) throw forbidden();
+  const visible = await db.task.count({ where: { AND: [{ id }, await taskVisibility(actor)] } });
+  // A private task stays invisible rather than forbidden, so its existence doesn't leak.
+  if (!visible) throw task.onlyMe ? notFound() : forbidden();
   return task;
 }
 
@@ -109,10 +218,10 @@ export async function getTask(actor: Actor, id: string) {
   return db.task.findUniqueOrThrow({
     where: { id },
     include: {
-      client: { select: { id: true, displayName: true } },
+      ...taskInclude,
       employee: { select: { id: true, nameEn: true, nameAr: true } },
+      employees: { select: { employee: { select: { id: true, nameEn: true, nameAr: true, employeeNo: true } } } },
       case: { select: { id: true, number: true } },
-      owner: { select: { id: true, name: true } },
       createdBy: { select: { name: true } },
       comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { name: true } }, attachment: { select: { id: true, filename: true } } } },
     },
@@ -127,29 +236,64 @@ function nextDue(from: Date, rule: string): Date {
   return d;
 }
 
-export async function setTaskStatus(actor: Actor, id: string, status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELLED") {
-  const task = await loadTask(actor, id);
+/** Closes a task for good, and for recurring work opens the next one with the same people and categories. */
+async function complete(tx: Tx, task: Prisma.TaskGetPayload<{ include: { categories: true; employees: true } }>) {
+  await tx.task.update({ where: { id: task.id }, data: { status: "DONE", completedAt: new Date(), holdReason: null } });
+  if (!task.recurrenceRule) return;
+  const number = `TSK-${pad(await nextNumber(tx, "TSK"))}`;
+  await tx.task.create({
+    data: {
+      number,
+      title: task.title,
+      description: task.description,
+      kind: task.kind,
+      clientId: task.clientId,
+      employeeId: task.employeeId,
+      ownerId: task.ownerId,
+      createdById: task.createdById,
+      hrRepId: task.hrRepId,
+      accountManagerId: task.accountManagerId,
+      onlyMe: task.onlyMe,
+      clientEmail: task.clientEmail,
+      financeRequired: task.financeRequired,
+      priority: task.priority,
+      recurrenceRule: task.recurrenceRule,
+      dueAt: nextDue(task.dueAt ?? todayDate(), task.recurrenceRule),
+      categories: { create: task.categories.map((c) => ({ categoryId: c.categoryId })) },
+      employees: { create: task.employees.map((e) => ({ employeeId: e.employeeId })) },
+    },
+  });
+}
+
+/**
+ * Not started → in progress → done, with on hold (a reason is required) and cancelled on the side.
+ * A task that needs payment goes to Waiting finance instead of done, until Finance confirms it.
+ */
+export async function setTaskStatus(actor: Actor, id: string, status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELLED", reason?: string | null) {
+  await loadTask(actor, id);
+  const task = await db.task.findUniqueOrThrow({ where: { id }, include: { categories: true, employees: true } });
+  if (status === "BLOCKED" && !reason) throw invalid("errors.validation", [{ path: "reason", message: "validation.required" }]);
+  const next = status === "DONE" && task.financeRequired && !task.financeClearedAt ? "WAITING_FINANCE" : status;
   return db.$transaction(async (tx) => {
-    await tx.task.update({ where: { id }, data: { status, completedAt: status === "DONE" ? new Date() : null } });
-    if (status === "DONE" && task.status !== "DONE" && task.recurrenceRule) {
-      const number = `TSK-${pad(await nextNumber(tx, "TSK"))}`;
-      await tx.task.create({
-        data: {
-          number,
-          title: task.title,
-          description: task.description,
-          kind: task.kind,
-          clientId: task.clientId,
-          employeeId: task.employeeId,
-          ownerId: task.ownerId,
-          createdById: task.createdById,
-          priority: task.priority,
-          recurrenceRule: task.recurrenceRule,
-          dueAt: nextDue(task.dueAt ?? todayDate(), task.recurrenceRule),
-        },
-      });
+    if (next === "DONE") {
+      if (task.status !== "DONE") await complete(tx, task);
+    } else {
+      await tx.task.update({ where: { id }, data: { status: next, completedAt: null, holdReason: next === "BLOCKED" ? reason : null } });
     }
-    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: id, action: "status_change", before: { status: task.status }, after: { status } });
+    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: id, action: "status_change", before: { status: task.status }, after: { status: next, ...(reason ? { reason } : {}) } });
+    return { id, status: next };
+  });
+}
+
+/** Finance confirms the payment side of a task, which closes it. */
+export async function clearTaskFinance(actor: Actor, id: string) {
+  await loadTask(actor, id);
+  const task = await db.task.findUniqueOrThrow({ where: { id }, include: { categories: true, employees: true } });
+  if (task.status !== "WAITING_FINANCE") throw invalid("errors.badTransition");
+  return db.$transaction(async (tx) => {
+    await tx.task.update({ where: { id }, data: { financeClearedAt: new Date() } });
+    await complete(tx, task);
+    await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: id, action: "finance_cleared", before: { status: "WAITING_FINANCE" }, after: { status: "DONE" } });
     return { id };
   });
 }
@@ -159,9 +303,7 @@ export async function reassignTask(actor: Actor, id: string, ownerId: string) {
   await activeOwner(ownerId);
   return db.$transaction(async (tx) => {
     await tx.task.update({ where: { id }, data: { ownerId } });
-    await tx.notification.create({
-      data: { userId: ownerId, entityType: "task", entityId: id, title: "notif.taskAssigned", body: JSON.stringify({ number: task.number, title: task.title }), href: `/tasks/${id}`, severity: "MEDIUM", dedupeKey: `task-assigned:${id}:${ownerId}:${Date.now()}` },
-    });
+    await notifyAssignee(tx, ownerId, actor.id, task);
     await writeAudit(tx, { actorId: actor.id, entityType: "task", entityId: id, action: "reassign", before: { ownerId: task.ownerId }, after: { ownerId } });
     return { id };
   });

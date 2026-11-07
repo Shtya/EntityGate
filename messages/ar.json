@@ -390,7 +390,9 @@
   "select": {
     "placeholder": "اختر…",
     "search": "بحث…",
-    "empty": "لا توجد نتائج"
+    "empty": "لا توجد نتائج",
+    "chosen": "تم اختيار {count}",
+    "remove": "إزالة {label}"
   },
   "date": {
     "placeholder": "اختر تاريخًا",
@@ -573,7 +575,8 @@
     "payable:read": "عرض ما على الشركة من مستحقات",
     "payable:manage": "إضافة المستحقات وتسويتها",
     "system:reset": "مسح البيانات التجريبية (للمسؤولين فقط)",
-    "price_list:manage": "تعديل قائمة أسعار الخدمات"
+    "price_list:manage": "تعديل قائمة أسعار الخدمات",
+    "task_category:manage": "إضافة فئات المهام وتعديلها وحذفها"
   },
   "access": {
     "title": "صلاحيات هذا الشخص",
@@ -703,11 +706,12 @@
       "LOW": "منخفضة"
     },
     "TaskStatus": {
-      "TODO": "للتنفيذ",
+      "TODO": "لم تبدأ",
       "IN_PROGRESS": "قيد التنفيذ",
-      "BLOCKED": "متوقفة",
+      "BLOCKED": "معلّقة",
       "DONE": "منجزة",
-      "CANCELLED": "ملغاة"
+      "CANCELLED": "ملغاة",
+      "WAITING_FINANCE": "بانتظار المالية"
     },
     "Recurrence": {
       "NONE": "لا تتكرر",
@@ -827,6 +831,10 @@
       "PER_EMPLOYEE": "لكل موظف",
       "PER_MONTH": "شهريًا",
       "PER_YEAR": "سنويًا"
+    },
+    "TaskKind": {
+      "CLIENT": "عميل",
+      "INTERNAL": "داخلية"
     }
   },
   "clients": {
@@ -1082,7 +1090,7 @@
     "internal": "داخلي",
     "start": "بدء",
     "done": "إنجاز",
-    "block": "متوقفة",
+    "block": "تعليق",
     "reopen": "إعادة فتح",
     "reassign": "إعادة إسناد",
     "nothing": "لا يوجد شيء",
@@ -1090,7 +1098,55 @@
     "emptyBody": "ستظهر المهام الجديدة هنا.",
     "commentsHint": "الملاحظات ودليل الإنجاز.",
     "createdBy": "أنشأها",
-    "completedAt": "اكتملت في"
+    "completedAt": "اكتملت في",
+    "formHint": "اختر الخدمات أولًا، وسيُملأ اسم المهمة منها تلقائيًا.",
+    "type": "نوع المهمة",
+    "categories": "الفئات",
+    "categoriesChosen": "تم اختيار {count}",
+    "noCategories": "لا توجد فئات بعد. أضفها من صفحة فئات المهام.",
+    "titleAuto": "يُملأ من الفئات التي تختارها، ويمكنك تعديله.",
+    "titlePlaceholder": "مثال: تجديد إقامة إسماعيل، رقم 2051125022",
+    "idReminder": "عند تقديم أي طلب، يجب ذكر اسم الموظف أو رقم هويته لضمان دقة الطلب وسرعة تنفيذه.",
+    "employees": "الموظفون",
+    "onlyMe": "لي فقط",
+    "onlyMeHint": "تُسند إليك ولا يراها غيرك.",
+    "onlyMeTab": "لي فقط",
+    "hrRep": "ممثل الموارد البشرية",
+    "accountManager": "مدير الحساب",
+    "nobody": "لا أحد",
+    "noClient": "بدون عميل",
+    "holdReason": "سبب التعليق",
+    "holdHint": "اذكر ما تنتظره المهمة ليعرف الآخرون.",
+    "clientEmail": "بريد العميل",
+    "financeRequired": "تتطلب دفعًا",
+    "financeRequiredHint": "عند إنجازها تنتظر المالية قبل إغلاقها.",
+    "financePending": "بانتظار المالية",
+    "financeCleared": "تم الدفع، أُكّد في {date}",
+    "confirmPayment": "تأكيد الدفع",
+    "confirmPaymentTitle": "تأكيد الدفع وإغلاق المهمة؟",
+    "confirmPaymentBody": "ستُعلَّم المهمة كمنجزة.",
+    "waitingFinance": "بانتظار المالية",
+    "created": "تم إنشاء المهمة",
+    "saved": "تم حفظ المهمة",
+    "edit": "تعديل المهمة",
+    "anyStatus": "كل الحالات",
+    "allCategories": "كل الفئات",
+    "anyone": "الجميع",
+    "people": "المسؤولون",
+    "ownerShort": "المكلَّف",
+    "hrRepShort": "الموارد",
+    "amShort": "المدير",
+    "dueOn": "تستحق {date}",
+    "overdueBadge": "متأخرة",
+    "reasonLabel": "السبب: {reason}",
+    "archivedCategoryFilter": "التصفية حسب فئة مؤرشفة.",
+    "stat_total": "الإجمالي",
+    "stat_done": "منجزة",
+    "stat_inProgress": "قيد التنفيذ",
+    "stat_waitingFinance": "بانتظار المالية",
+    "stat_notStarted": "لم تبدأ",
+    "stat_onHold": "معلّقة",
+    "stat_overdue": "متأخرة"
   },
   "cases": {
     "title": "الطلبات",
@@ -1469,5 +1525,29 @@
     "emptyTitle": "لم تُسعَّر أي خدمة بعد",
     "emptyBody": "أضف كل خدمة تقدمها مع سعرها.",
     "emptyBodyReadOnly": "يضيف فريق المالية الخدمات وأسعارها هنا."
+  },
+  "taskCategories": {
+    "title": "فئات المهام",
+    "description": "الخدمات التي تخص المهام. اختيار فئة عند إنشاء مهمة يملأ اسمها تلقائيًا.",
+    "name": "الاسم",
+    "add": "إضافة فئة",
+    "addHint": "خدمة جديدة يمكن اختيارها",
+    "added": "تمت إضافة الفئة",
+    "rename": "إعادة تسمية الفئة",
+    "counts": "{open} مفتوحة · {total} إجمالًا",
+    "taskCount": "{count, plural, =0 {بلا مهام} =1 {مهمة واحدة} =2 {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}",
+    "newTask": "مهمة جديدة",
+    "removeTitle": "حذف «{name}»؟",
+    "removeUsed": "{count, plural, =1 {مهمة واحدة تستخدمها} =2 {مهمتان تستخدمانها} few {# مهام تستخدمها} other {# مهمة تستخدمها}}، لذلك ستُؤرشف: تحتفظ بها هذه المهام، ولن تظهر في المهام الجديدة. يمكنك استعادتها لاحقًا.",
+    "removeUnused": "لا توجد مهمة تستخدمها، لذلك ستُحذف نهائيًا.",
+    "archived": "تمت أرشفة الفئة",
+    "deleted": "تم حذف الفئة",
+    "archivedTitle": "الفئات المؤرشفة",
+    "restore": "استعادة",
+    "restored": "تمت استعادة الفئة",
+    "duplicate": "توجد فئة بهذا الاسم بالفعل",
+    "unavailable": "إحدى الفئات لم تعد متاحة",
+    "emptyTitle": "لا توجد فئات بعد",
+    "emptyBody": "يضيفها المسؤول من هنا."
   }
 }

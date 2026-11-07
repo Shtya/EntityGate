@@ -35,6 +35,7 @@ export const PERMISSIONS = {
   "task:read_all": "View team and department task queues",
   "task:create": "Create tasks",
   "task:update": "Update tasks",
+  "task_category:manage": "Add, rename and remove task categories",
   "case:read": "View cases",
   "case:create": "Create cases",
   "case:update": "Update case stages",
@@ -121,6 +122,7 @@ export const ROLES: Record<
       "invoice:read", "payment:read", "expense:read", "finance:read",
       "dashboard:executive", "report:read", "report:export",
       "user:read", "role:read",
+      "task_category:manage",
     ],
   },
   ACCOUNT_MANAGER: {
@@ -181,6 +183,7 @@ export const ROLES: Record<
       "task:read", "task:read_all", "task:create", "task:update",
       "case:read", "case:create", "case:update",
       "escalation:read", "escalation:raise",
+      "task_category:manage",
     ],
   },
   EXECUTIVE: {
@@ -208,7 +211,7 @@ export const PAGE_PERMISSIONS: PermissionKey[] = ["overview:read", "client:read"
 const GROUP_PREFIXES: { key: string; prefixes: string[] }[] = [
   { key: "clients", prefixes: ["client", "contract"] },
   { key: "workforce", prefixes: ["employee", "compensation", "allocation", "document"] },
-  { key: "operations", prefixes: ["task", "case", "escalation"] },
+  { key: "operations", prefixes: ["task", "task_category", "case", "escalation"] },
   { key: "finance", prefixes: ["invoice", "billing_run", "payment", "expense", "payroll", "payable", "period", "finance", "price_list"] },
   { key: "reporting", prefixes: ["dashboard", "report"] },
   { key: "admin", prefixes: ["user", "role", "system", "master_data", "reminder_rule", "audit", "integration"] },
