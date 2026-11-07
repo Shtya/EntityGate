@@ -93,14 +93,17 @@ export function PanelHeader({ title, description, actions, className }: { title:
   );
 }
 
-/** One number with a label. Floats on its own: stats are never wrapped in a second card. */
+/**
+ * One number with a label. Floats on its own: stats are never wrapped in a second card.
+ * Numbers never get cut off: on a narrow tile the icon steps aside and the figure shrinks to fit.
+ */
 export function StatTile({ icon, label, value, className }: { icon?: React.ReactNode; label: string; value: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("card flex min-w-0 items-center gap-3.5 px-5 py-4", className)}>
-      {icon && <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary-soft text-primary [&_svg]:size-[18px] [&_svg]:stroke-[1.75]">{icon}</span>}
+    <div className={cn("card @container flex min-w-0 items-center gap-3.5 px-5 py-4", className)}>
+      {icon && <span className="hidden size-9 shrink-0 place-items-center rounded-md bg-primary-soft text-primary @[210px]:grid [&_svg]:size-[18px] [&_svg]:stroke-[1.75]">{icon}</span>}
       <div className="min-w-0">
-        <div className="truncate text-xl font-semibold leading-tight tracking-[-0.02em] num">{value}</div>
-        <p className="truncate text-xs text-muted">{label}</p>
+        <div className="whitespace-nowrap text-base font-semibold leading-tight tracking-[-0.02em] num @[170px]:text-lg @[230px]:text-xl">{value}</div>
+        <p className="line-clamp-2 text-xs text-muted">{label}</p>
       </div>
     </div>
   );

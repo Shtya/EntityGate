@@ -41,6 +41,18 @@ const monthsAgo = (n: number) => new Date(Date.UTC(now.getUTCFullYear(), now.get
 const period = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
 const addDays = (days: number) => iso(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days)));
 
+/** Sample prices for the walkthrough only. The company sets its real ones. */
+export const DEMO_PRICES = [
+  ["IQAMA_RENEWAL", "Iqama renewal", "تجديد الإقامة", "PER_EMPLOYEE", "650"],
+  ["EXIT_REENTRY", "Exit / re-entry visa", "تأشيرة خروج وعودة", "PER_REQUEST", "250"],
+  ["WORK_PERMIT", "Work permit issuance", "إصدار رخصة عمل", "PER_EMPLOYEE", "900"],
+  ["SPONSOR_TRANSFER", "Sponsorship transfer", "نقل كفالة", "PER_EMPLOYEE", "2500"],
+  ["NEW_HIRE", "New joiner onboarding", "تهيئة موظف جديد", "PER_EMPLOYEE", "1200"],
+  ["FINAL_SETTLEMENT", "Final settlement", "المخالصة النهائية", "PER_EMPLOYEE", "800"],
+  ["MEDICAL_INSURANCE", "Medical insurance administration", "إدارة التأمين الطبي", "PER_YEAR", "450"],
+  ["PAYROLL_ADMIN", "Payroll administration", "إدارة الرواتب", "PER_MONTH", "150"],
+] as const;
+
 const CLIENTS = [
   { name: "Najd Logistics", model: "COST_PLUS_PERCENT", fee: { feePercent: "8" }, owner: "am1", people: 9 },
   { name: "Red Sea Hospitality", model: "COST_PLUS_PERCENT", fee: { feePercent: "10" }, owner: "am1", people: 7 },
@@ -140,6 +152,8 @@ async function main() {
   }
   await call(head, "/escalations", { title: "Iqama renewals blocked at Muqeem", severity: "HIGH", ownerId: users.get("ops"), clientId: clients[1].id, impactAmount: "42000.00" });
   await call(head, "/escalations", { title: "Disputed fee on last invoice", severity: "CRITICAL", ownerId: users.get("head"), clientId: clients[3].id, impactAmount: "108226.00" });
+
+  for (const [code, nameEn, nameAr, unit, price] of DEMO_PRICES) await call(finance, "/price-list", { code, nameEn, nameAr, unit, price });
 
   for (const [type, description, due, amount] of [["SALARY", "Salaries for this month", 2, "198000"], ["GOSI", "GOSI contributions", 10, "21400"], ["GOV_FEE", "Work permit renewals", -3, "8600"]] as const) {
     await call(finance, "/payables", { type, description, dueDate: addDays(due), amount });

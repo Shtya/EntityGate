@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Empty state with a quiet line illustration (brass on paper) and one clear action.
+ * Empty state with a quiet line illustration (in the brand teal) and one clear action.
  */
 export function EmptyState({
   title,

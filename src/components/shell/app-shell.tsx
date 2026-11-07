@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommandPalette } from "./command-palette";
 import { Header } from "./header";
 import { MainWell } from "./main-well";
+import { NavProgress } from "./nav-progress";
 import { visibleNav } from "./nav";
 import { Sidebar } from "./sidebar";
 
@@ -92,6 +93,9 @@ export function AppShell({
       <MainWell inert={drawerOpen} pathname={pathname}>
         {children}
       </MainWell>
+      <Suspense>
+        <NavProgress />
+      </Suspense>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} nav={nav} />
     </div>
   );

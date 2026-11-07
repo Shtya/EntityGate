@@ -1,28 +1,57 @@
+"use client";
+
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-/** Gate glyph: two pillars under an arch. Fixed brand colours, so it reads on any surface. */
-export function BrandMark({ className, size = 24 }: { className?: string; size?: number }) {
+/*
+ * Entity Gate's logo, traced from the company's own SVG. Colours come from CSS variables so it
+ * reads on both themes; `fixed` keeps the original print colours for paper.
+ */
+const MARK_A = "m146.1 29.4l-13.1-13.1c-9.8-9.8-25.7-9.8-35.5 0l-79.4 79.4c-9.8 9.8-9.8 25.7 0 35.5l13.1 13.1z";
+const MARK_B = "m214.2 178.8l-23.8-23.9 22.8-22.9c9.8-9.8 9.8-25.7 0-35.5l-13-13.1-97.2 97.2c-9.8 9.8-9.8 25.7 0 35.5l13.1 13.1 43.4-43.5 4.1 4.1c3.7 3.7 3.7 9.8 0 13.5l-39.7 39.7c-3.8 3.8-9.9 3.8-13.6 0l-39.7-39.7c-3.7-3.7-3.7-9.8 0-13.5l100.2-100.2c9.8-9.8 9.8-25.7 0-35.5l-13.1-13.1-137.8 137.8c-9.8 9.8-9.8 25.7 0 35.5l66.4 66.3 13 13.1c9.8 9.8 25.8 9.8 35.6 0l13-13.1 66.3-66.3c9.9-9.8 9.9-25.7 0-35.5z";
+const ENTITY = ["m291.8 92q-0.3 0.3-0.8 0.3h-19.1q-0.5 0-0.4 0.5v14.4q-0.1 0.5 0.4 0.5h11q0.4 0 0.8 0.3 0.3 0.3 0.3 0.8v8.8q0 0.5-0.3 0.8-0.4 0.3-0.8 0.3h-11q-0.5 0-0.4 0.5v14.5q-0.1 0.5 0.4 0.5h19.1q0.5 0 0.8 0.3 0.3 0.3 0.3 0.8v8.9q0 0.4-0.3 0.7-0.3 0.4-0.8 0.3h-31.3q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.7v-61.8q0-0.5 0.3-0.8 0.3-0.3 0.8-0.3h31.3q0.5 0 0.8 0.3 0.3 0.3 0.3 0.8v8.8q0 0.5-0.3 0.8z","m325.1 81.6q0.3-0.4 0.7-0.4h10.6q0.5 0 0.8 0.4 0.3 0.3 0.3 0.7v61.8q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-12q-0.9 0-1.2-0.9l-11.3-35.4q-0.1-0.2-0.4-0.2-0.2 0.1-0.2 0.3l0.1 35.1q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-10.6q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-61.8q0-0.4 0.3-0.7 0.3-0.3 0.8-0.3h12q0.9 0 1.2 0.9l11.4 35.3q0.1 0.3 0.3 0.3 0.2-0.1 0.2-0.4l-0.1-35.1q0-0.4 0.4-0.7z","m381.8 81.6q0.3 0.3 0.3 0.7v8.9q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-11.4q-0.5 0-0.4 0.5v51.3q-0.1 0.5-0.4 0.8-0.3 0.3-0.7 0.3h-10.7q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-51.3q0-0.5-0.5-0.5h-11q-0.4 0-0.7-0.3-0.4-0.3-0.4-0.8v-8.9q0-0.4 0.4-0.7 0.3-0.4 0.7-0.4h36.2q0.5 0 0.8 0.4z","m388.7 144.9q-0.3-0.3-0.3-0.8v-61.8q0-0.4 0.3-0.7 0.3-0.4 0.8-0.4h10.6q0.5 0 0.8 0.4 0.3 0.3 0.3 0.7v61.8q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-10.7q-0.4 0-0.7-0.3z","m445.6 81.6q0.3 0.3 0.3 0.7v8.9q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-11.4q-0.5 0-0.4 0.5v51.3q-0.1 0.5-0.4 0.8-0.3 0.3-0.7 0.3h-10.7q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-51.3q0-0.5-0.5-0.5h-11q-0.4 0-0.7-0.3-0.4-0.3-0.4-0.8v-8.9q0-0.4 0.4-0.7 0.3-0.4 0.7-0.4h36.2q0.5 0 0.8 0.4z","m463.6 144.8q-0.3-0.3-0.3-0.8v-23.7l-0.1-0.6-12.8-37.2q-0.1-0.2-0.1-0.4 0-0.9 1-0.9h11.3q1 0 1.3 0.9l5.6 21.9q0.1 0.3 0.3 0.3 0.2 0 0.3-0.3l5.6-21.9q0.3-0.9 1.3-0.9h11.2q0.6 0 0.9 0.4 0.2 0.3 0.1 0.9l-12.9 37.2-0.1 0.6v23.7q0 0.5-0.3 0.8-0.4 0.3-0.8 0.3h-10.7q-0.5 0-0.8-0.3z"];
+const GATE = ["m263.6 220.1q-5-4.7-5-12.6v-30.9q0-7.8 4.9-12.5 5-4.7 13.3-4.7 8.2 0 13.2 4.7 5 4.8 5 12.6v3.5q0 0.4-0.3 0.8-0.3 0.3-0.8 0.3h-10.7q-0.4 0-0.7-0.3-0.3-0.3-0.3-0.8v-3.7q-0.1-2.7-1.5-4.4-1.5-1.7-3.9-1.7c-1.7 0-2.9 0.6-3.9 1.7q-1.4 1.7-1.4 4.4v31.1q0 2.8 1.4 4.4 1.5 1.7 3.9 1.7c1.5 0 2.9-0.5 3.9-1.7q1.4-1.7 1.5-4.4v-7.3q0-0.5-0.5-0.5h-4q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-8.1q0-0.4 0.3-0.8 0.3-0.3 0.8-0.3h16.2q0.5 0 0.8 0.3 0.3 0.3 0.3 0.8v16.9q0 7.9-5 12.6-5 4.7-13.2 4.7-8.3 0-13.3-4.7z","m326.9 223.1l-1.4-8.8q0-0.4-0.6-0.4h-11.6q-0.5-0.1-0.5 0.4l-1.5 8.8q-0.1 1-1.2 1h-10.7q-1.2 0-0.9-1.2l13.5-61.8q0.1-1 1.1-1h12.4q1 0 1.2 1l13.3 61.8 0.1 0.4q0 0.8-1 0.8h-11q-1.1 0-1.2-1zm-11.9-19.2h8.2q0.4 0 0.4-0.5l-4.3-24.9q-0.1-0.3-0.3-0.3-0.2 0-0.3 0.3l-4.1 24.9q0 0.5 0.4 0.5z","m376.1 160.4q0.4 0.3 0.4 0.8v8.9q0 0.4-0.4 0.7-0.3 0.4-0.7 0.4h-11.5q-0.4 0-0.4 0.4v51.4q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-10.7q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-51.4q0-0.4-0.5-0.4h-10.9q-0.5 0-0.8-0.4-0.3-0.3-0.3-0.7v-8.9q0-0.5 0.3-0.8 0.3-0.3 0.8-0.3h36.2q0.4 0 0.7 0.3z","m415.9 170.8q-0.3 0.4-0.8 0.4h-19.1q-0.4 0-0.4 0.4v14.5q0 0.4 0.4 0.4h11q0.5 0 0.8 0.3 0.3 0.4 0.3 0.8v8.9q0 0.4-0.3 0.8-0.3 0.3-0.8 0.3h-11q-0.4 0-0.4 0.4v14.6q0 0.4 0.4 0.4h19.1q0.5 0 0.8 0.4 0.3 0.3 0.3 0.7v8.9q0 0.5-0.3 0.8-0.3 0.3-0.8 0.3h-31.3q-0.5 0-0.8-0.3-0.3-0.3-0.3-0.8v-61.8q0-0.4 0.3-0.8 0.3-0.3 0.8-0.3h31.3q0.5 0 0.8 0.3 0.3 0.4 0.3 0.8v8.9q0 0.4-0.3 0.8z"];
+
+const ORIGINAL = { from: "#0f6f7f", to: "#0a1a3a", ink: "#0a1a3a", accent: "#0f6f7f" };
+const themed = { from: "var(--logo-from)", to: "var(--logo-to)", ink: "var(--logo-ink)", accent: "var(--logo-accent)" };
+
+export function BrandMark({ className, size = 24, fixed }: { className?: string; size?: number; fixed?: boolean }) {
+  const id = useId().replace(/:/g, "");
+  const c = fixed ? ORIGINAL : themed;
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={cn("shrink-0", className)} aria-hidden>
-      <rect width="32" height="32" rx="7.5" fill="#1c4478" />
-      <path d="M7.5 26V14.5a8.5 8.5 0 0 1 17 0V26" stroke="#e0ae5e" strokeWidth="3.4" strokeLinecap="round" />
-      <path d="M12.75 26v-10.5a3.25 3.25 0 0 1 6.5 0V26z" fill="#fff" />
+    <svg width={size} height={size} viewBox="-33.7 5 300 300" className={cn("shrink-0", className)} aria-hidden>
+      <defs>
+        {[["a", "matrix(-206.67,-206.67,770.178,-770.178,233.4,231.59)"], ["b", "matrix(-206.67,-206.66,279.702,-279.716,213.08,251.9)"]].map(([k, m]) => (
+          <linearGradient key={k} id={`${id}${k}`} gradientUnits="userSpaceOnUse" x2="1" gradientTransform={m}>
+            <stop style={{ stopColor: c.from }} />
+            <stop offset="1" style={{ stopColor: c.to }} />
+          </linearGradient>
+        ))}
+      </defs>
+      <path d={MARK_A} fill={`url(#${id}a)`} />
+      <path d={MARK_B} fill={`url(#${id}b)`} />
     </svg>
   );
 }
 
-/** Always LTR: it's a product name, in both languages. */
-export function Wordmark({ className, textOnly }: { className?: string; textOnly?: boolean }) {
-  const text = (
-    <span dir="ltr" className="text-[15px] font-semibold tracking-[-0.02em]">
-      Entity<span className="font-normal opacity-60">Gate</span>
-    </span>
-  );
-  if (textOnly) return text;
+/** The name in the logo's own letters, on one line: ENTITY in ink, GATE in teal. */
+export function BrandName({ className, height = 13, fixed }: { className?: string; height?: number; fixed?: boolean }) {
+  const c = fixed ? ORIGINAL : themed;
   return (
-    <span className={cn("flex items-center gap-2.5", className)}>
-      <BrandMark size={28} />
-      {text}
+    <svg height={height} width={(height * 414) / 69} viewBox="257 79 414 69" className={cn("shrink-0", className)} role="img" aria-label="Entity Gate">
+      <g style={{ fill: c.ink }}>{ENTITY.map((d) => <path key={d.slice(0, 24)} d={d} />)}</g>
+      <g style={{ fill: c.accent }} transform="translate(252.8 -78.3)">{GATE.map((d) => <path key={d.slice(0, 24)} d={d} />)}</g>
+    </svg>
+  );
+}
+
+/** Always left to right: it's a product name, in both languages. */
+export function Wordmark({ className, textOnly }: { className?: string; textOnly?: boolean }) {
+  if (textOnly) return <BrandName className={className} />;
+  return (
+    <span dir="ltr" className={cn("flex items-center gap-2.5", className)}>
+      <BrandMark size={32} />
+      <BrandName height={15} />
     </span>
   );
 }

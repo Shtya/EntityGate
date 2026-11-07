@@ -58,6 +58,7 @@ async function main() {
       await tx.$executeRaw`DELETE FROM attachment_blobs b WHERE NOT EXISTS (SELECT 1 FROM attachments a WHERE a.storage_key = b.key)`;
       await tx.payable.deleteMany({ where: { description: { startsWith: "E2E " } } });
       await tx.sponsor.deleteMany({ where: { name: { startsWith: "E2E " } } });
+      await tx.servicePrice.deleteMany({ where: { code: { startsWith: "E2E_" } } });
       await tx.expenseCategory.deleteMany({ where: { code: { startsWith: "E2E_" }, expenses: { none: {} } } });
       await tx.notification.deleteMany({ where: { OR: [{ title: { startsWith: "E2E " } }, { body: null }, { body: "{}" }, { body: { contains: "E2E " } }] } });
     },

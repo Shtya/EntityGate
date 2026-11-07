@@ -61,13 +61,17 @@
   --text-muted: #565d69;
   --text-faint: #606773; /* AA (4.5:1) on the well too, the darkest surface it sits on */
 
-  /* Brand: ink, with more chroma so light mode feels alive, and brass */
-  --primary: #1c4478;
-  --primary-hover: #153660;
-  --primary-soft: #e3ebf6;
+  /* Brand: Entity Gate's navy and teal (entity-gate.com) */
+  --primary: #0a5269;
+  --primary-hover: #083f51;
+  --primary-soft: #e0eef2;
   --on-primary: #ffffff;
-  --accent: #a56f14;
-  --accent-soft: #f7ecd6;
+  --accent: #0f6f7f;
+  --accent-soft: #dcefef;
+  --logo-from: #0f6f7f;
+  --logo-to: #0a1a3a;
+  --logo-ink: #0a1a3a;
+  --logo-accent: #0f6f7f;
 
   --success: #1d7350;
   --success-soft: #dff1e8;
@@ -78,7 +82,7 @@
   --info: #1d659e;
   --info-soft: #dfedf8;
 
-  --ring: #1c4478;
+  --ring: #0a5269;
   --overlay: rgb(20 23 28 / 0.32);
 
   --thumb: rgb(60 55 40 / 0.32);
@@ -89,12 +93,12 @@
   --sa: 1;
 
   /* Glass (floating layer only) */
-  --glass-bg: rgb(255 255 255 / 0.76);
+  --glass-bg: #ffffff;
   --glass-border: rgb(255 255 255 / 0.65);
   --glass-edge: rgb(45 40 25 / 0.12);
   --glass-shadow: 0 1px 1px rgb(30 28 20 / 0.05), 0 8px 16px -6px rgb(30 28 20 / 0.12), 0 28px 56px -16px rgb(30 28 20 / 0.24);
 
-  --chart-1: #2e6fb7;
+  --chart-1: #008aa0;
   --chart-2: #6b7a8f;
   --chart-3: #b5761a;
   --chart-4: #4f8a68;
@@ -109,53 +113,57 @@
 }
 
 .dark {
-  /* The well stays darker than the frame: same depth logic as light. */
-  --frame: #1a1d23;
-  --well: #0c0e11;
-  --surface: #181b21;
-  --surface-2: #20242b;
-  --surface-3: #2a2f37;
-  --border: #272c34;
-  --border-strong: #3a404a;
-  --border-card: rgb(255 255 255 / 0.07);
+  /* Entity Gate's navy. The well stays darker than the frame: same depth logic as light. */
+  --frame: #0b1a33;
+  --well: #06101f;
+  --surface: #0f2140;
+  --surface-2: #15294b;
+  --surface-3: #1c3358;
+  --border: #1d3256;
+  --border-strong: #2c4772;
+  --border-card: rgb(140 180 230 / 0.09);
 
-  --text: #eceef1;
-  --text-muted: #a4abb6;
-  --text-faint: #8a919c;
+  --text: #e9eff7;
+  --text-muted: #a3b3c9;
+  --text-faint: #8a9bb3;
 
-  --primary: #93b7e8;
-  --primary-hover: #aecaef;
-  --primary-soft: #1b2a3e;
-  --on-primary: #0c0e11;
-  --accent: #dcab5f;
-  --accent-soft: #2d2415;
+  --primary: #3cc0cc;
+  --primary-hover: #62d0da;
+  --primary-soft: #0f3346;
+  --on-primary: #04141f;
+  --accent: #5fd0d6;
+  --accent-soft: #10364a;
+  --logo-from: #4fcad3;
+  --logo-to: #2a7fb5;
+  --logo-ink: #ffffff;
+  --logo-accent: #4fcad3;
 
   --success: #6cc598;
-  --success-soft: #142a20;
+  --success-soft: #11302a;
   --warning: #e6ab4e;
-  --warning-soft: #2d2212;
-  --danger: #ec8074;
-  --danger-soft: #311916;
+  --warning-soft: #2e2716;
+  --danger: #ef8579;
+  --danger-soft: #35202a;
   --info: #7fb6e6;
-  --info-soft: #152534;
+  --info-soft: #12294a;
 
-  --ring: #93b7e8;
-  --overlay: rgb(0 0 0 / 0.56);
+  --ring: #3cc0cc;
+  --overlay: rgb(2 8 20 / 0.62);
 
-  --thumb: rgb(255 255 255 / 0.2);
-  --thumb-hover: rgb(255 255 255 / 0.34);
+  --thumb: rgb(190 215 255 / 0.2);
+  --thumb-hover: rgb(190 215 255 / 0.34);
 
   --shadow-rgb: 0 0 0;
   --sa: 3;
 
-  --glass-bg: rgb(30 34 41 / 0.72);
-  --glass-border: rgb(255 255 255 / 0.1);
-  --glass-edge: rgb(0 0 0 / 0.4);
-  --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 16px -6px rgb(0 0 0 / 0.45), 0 28px 56px -16px rgb(0 0 0 / 0.7);
+  --glass-bg: #132a4e;
+  --glass-border: rgb(160 195 240 / 0.12);
+  --glass-edge: rgb(0 0 0 / 0.45);
+  --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 16px -6px rgb(0 0 0 / 0.5), 0 28px 56px -16px rgb(0 0 0 / 0.75);
 
-  --chart-1: #5a93d8;
+  --chart-1: #24a3b2;
   --chart-2: #8a97a8;
-  --chart-3: #b98a35;
+  --chart-3: #b5853a;
   --chart-4: #8fb39a;
   --chart-5: #d58a6f;
   --chart-6: #5d6878;
@@ -448,12 +456,34 @@
 /* Entrance: one pass, top to bottom. "both" holds the start state through the delay. */
 .page > * {
   flex-shrink: 0; /* cards use overflow: clip, which would otherwise let flexbox squash them */
-  animation: rise 420ms var(--ease-shell) both;
 }
-.page > :nth-child(2) { animation-delay: 50ms }
-.page > :nth-child(3) { animation-delay: 100ms }
-.page > :nth-child(4) { animation-delay: 150ms }
-.page > :nth-child(n + 5) { animation-delay: 200ms }
+/* A skeleton only appears when loading is actually slow, so quick page changes never flash it. */
+.loading-delayed {
+  display: contents;
+}
+.loading-delayed > * {
+  animation: fade-in 160ms ease-out 280ms both;
+}
+/* Thin bar at the top while the next page loads. */
+.nav-progress {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: 0;
+  z-index: 60;
+  block-size: 2px;
+  pointer-events: none;
+}
+.nav-progress > span {
+  display: block;
+  block-size: 100%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  transform-origin: var(--progress-origin, left);
+  transition: transform 8s cubic-bezier(0.1, 0.7, 0.2, 1), opacity 200ms ease 150ms;
+}
+[dir="rtl"] .nav-progress > span {
+  --progress-origin: right;
+}
 
 /* Cards */
 .card {
@@ -573,20 +603,13 @@
 
 /* ═══════════════════════════ Glass: floating layer only ═══════════════════════════ */
 
+/* Floating layers (menus, popovers, dialogs) are fully opaque: text behind them must never show through. */
 .glass {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   outline: 1px solid var(--glass-edge);
   outline-offset: 0;
-  box-shadow: var(--glass-shadow), inset 0 1px 0 rgb(255 255 255 / 0.18);
-  backdrop-filter: blur(22px) saturate(165%);
-  -webkit-backdrop-filter: blur(22px) saturate(165%);
-}
-/* No blur support: go solid. Readability always wins over effect. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
-    background: var(--surface);
-  }
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 
 /* ═══════════════════════════ Responsive shell ═══════════════════════════ */
@@ -722,10 +745,4 @@
 .auth-arches {
   inset-inline-end: -120px;
 }
-/* The card sits on a dark field, so light glass needs extra opacity to keep body text at AA. */
-.auth-card {
-  --glass-bg: rgb(255 255 255 / 0.88);
-}
-.dark .auth-card {
-  --glass-bg: rgb(30 34 41 / 0.72);
-}
+/* Solid like every floating layer, so the arches behind never show through the form. */

@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, PageTabs, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -56,7 +57,9 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
             { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
             { key: "category", type: "select", label: t("cases.category"), allLabel: t("cases.allCategories"), options: categories.map((c) => ({ value: c.id, label: categoryLabel(t, c) })) },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="cases" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(c) => c.id}

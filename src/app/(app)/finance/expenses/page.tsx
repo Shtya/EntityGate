@@ -11,6 +11,7 @@ import { formatDate, toDateOnly, todayDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { ActionButton, FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { RecordTable } from "@/components/patterns/record";
@@ -50,7 +51,9 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
             { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
             { key: "month", type: "select", label: t("billing.month"), allLabel: t("finance.allMonths"), options: recentPeriods(24).map((p) => ({ value: p, label: p })) },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="expenses" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(e) => e.id}

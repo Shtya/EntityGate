@@ -26,7 +26,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <main className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 py-8 sm:px-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
         <div className="hidden animate-rise lg:block">
           <p className="font-display text-[52px] leading-[1.04] tracking-[-0.01em]">
-            {t("headlineStart")} <em className="text-[#dcab5f]">{t("headlineEnd")}</em>
+            {t("headlineStart")} <em className="text-[#4fcad3]">{t("headlineEnd")}</em>
           </p>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-white/65">{t("blurb")}</p>
         </div>
@@ -49,7 +49,7 @@ function Arches() {
           <path
             key={i}
             d={`M${x} 720V${360 - i * 6}a${w / 2} ${w / 2} 0 0 1 ${w} 0V720`}
-            stroke={i === 3 ? "#dcab5f" : "rgba(255,255,255,0.1)"}
+            stroke={i === 3 ? "#3cc0cc" : "rgba(255,255,255,0.1)"}
             strokeWidth={i === 3 ? 1.5 : 1}
           />
         );

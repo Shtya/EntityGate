@@ -8,11 +8,13 @@ import { PAGE_SIZE } from "@/server/validation";
 import { clientOptions } from "@/server/modules/clients/service";
 import { INVOICE_STATUSES, listInvoicesQuery } from "@/server/modules/billing/schema";
 import { listInvoices, receivables } from "@/server/modules/billing/service";
+import { serviceOptions } from "@/server/modules/price-list/service";
 import { formatDate, todayDate } from "@/lib/dates";
 import { daysPastDue } from "@/lib/finance";
 import { formatMoney, money } from "@/lib/money";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, PageTabs, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -32,7 +34,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const t = await getTranslations();
   const locale = await getLocale();
   const q = listInvoicesQuery.parse(await searchParams);
-  const [{ rows, total, page }, stats, clients] = await Promise.all([listInvoices(q), receivables(), clientOptions()]);
+  const [{ rows, total, page }, stats, clients, services] = await Promise.all([listInvoices(q), receivables(), clientOptions(), serviceOptions(locale)]);
   const today = todayDate();
   const m = (v: unknown, compact = false) => formatMoney(String(v), { locale, compact });
   const totalAging = money(stats.total);
@@ -46,7 +48,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         actions={
           <>
             {can(actor, "billing_run:manage") && <Button asChild variant="secondary"><Link href="/billing/runs">{t("billing.runs")}</Link></Button>}
-            {can(actor, "invoice:create") && <FormButton label={t("billing.addInvoice")} title={t("billing.addInvoice")} description={t("billing.addInvoiceHint")} endpoint="/invoices" submitLabel={t("billing.createDraft")} redirectTo="/billing/invoices/{id}" initial={{ type: "ONE_OFF", quantity: "1" }} fields={invoiceFields(t, clients)} wide />}
+            {can(actor, "invoice:create") && <FormButton label={t("billing.addInvoice")} title={t("billing.addInvoice")} description={t("billing.addInvoiceHint")} endpoint="/invoices" submitLabel={t("billing.createDraft")} redirectTo="/billing/invoices/{id}" initial={{ type: "ONE_OFF", quantity: "1" }} fields={invoiceFields(t, clients, services)} wide />}
           </>
         }
       />
@@ -80,6 +82,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           { key: "open", label: t("billing.view_open"), href: "/billing" },
           { key: "overdue", label: t("billing.view_overdue"), href: "/billing?view=overdue" },
           { key: "all", label: t("billing.view_all"), href: "/billing?view=all" },
+          { key: "price-list", label: t("nav.priceList"), href: "/billing/price-list" },
           ...(can(actor, "payment:read") ? [{ key: "payments", label: t("billing.payments"), href: "/billing/payments" }] : []),
         ]}
       />
@@ -91,7 +94,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             { key: "status", type: "select", label: t("common.status"), allLabel: t("clients.allStatuses"), options: INVOICE_STATUSES.map((s) => ({ value: s, label: t(`enums.InvoiceStatus.${s}`) })) },
             { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="invoices" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(i) => i.id}

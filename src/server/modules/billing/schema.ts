@@ -9,7 +9,8 @@ export const runSchema = z.object({ period });
 export const invoiceSchema = z.object({
   clientId: reqId,
   type: z.enum(["ONE_OFF", "SPONSORSHIP_RENEWAL"], { error: "validation.required" }),
-  description: reqText(300),
+  serviceId: optId,
+  description: optText(300),
   amount: optMoney,
   quantity: z.coerce.number().int().min(1).max(10000).nullish(),
   poNumber: optText(60),

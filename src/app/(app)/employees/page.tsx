@@ -12,6 +12,7 @@ import { formatDate, toDateOnly, todayDate } from "@/lib/dates";
 import { daysUntil } from "@/lib/workforce";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -82,7 +83,9 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
             { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
             { key: "sponsor", type: "select", label: t("employees.sponsor"), allLabel: t("employees.allSponsors"), options: sponsors },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="employees" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(e) => e.id}

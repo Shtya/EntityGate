@@ -60,7 +60,8 @@
     "periods": "Month close",
     "reports": "Reports",
     "masterData": "Reference data",
-    "settings": "Settings"
+    "settings": "Settings",
+    "priceList": "Price list"
   },
   "shell": {
     "home": "EntityGate home",
@@ -571,7 +572,8 @@
     "integration:manage": "Manage integrations",
     "payable:read": "View what the company owes",
     "payable:manage": "Add and settle payables",
-    "system:reset": "Clear demo data (administrators only)"
+    "system:reset": "Clear demo data (administrators only)",
+    "price_list:manage": "Edit the service price list"
   },
   "access": {
     "title": "Permissions for this person",
@@ -819,6 +821,12 @@
     "SponsorType": {
       "OWN": "Our company",
       "THIRD_PARTY": "Another company"
+    },
+    "ServiceUnit": {
+      "PER_REQUEST": "Per request",
+      "PER_EMPLOYEE": "Per employee",
+      "PER_MONTH": "Per month",
+      "PER_YEAR": "Per year"
     }
   },
   "clients": {
@@ -1184,7 +1192,7 @@
     "invoiceType": "Type",
     "lineDescription": "Description",
     "unitAmount": "Unit amount",
-    "unitAmountHint": "Renewals use the contract's fee if blank.",
+    "unitAmountHint": "Leave blank to use the service's price, or the contract's renewal fee.",
     "quantity": "Quantity",
     "po": "PO number",
     "receivables": "Total receivables",
@@ -1253,7 +1261,9 @@
     "markReconciled": "Mark reconciled",
     "reconciledYes": "Reconciled",
     "missingPay": "No pay record, so no cost was billed",
-    "missingPayHint": "Add their pay, then cancel this run and build it again."
+    "missingPayHint": "Add their pay, then cancel this run and build it again.",
+    "service": "Service",
+    "serviceHint": "Fills the description and price from the price list. You can still change them."
   },
   "finance": {
     "title": "Profit & loss",
@@ -1437,5 +1447,27 @@
     "clearedToast": "Demo data cleared. The system is ready for your data.",
     "clearedTitle": "The demo data has been cleared",
     "clearedBody": "Done by {name} on {date}. Everything in the system now is real data, so this action is no longer available."
+  },
+  "export": {
+    "excel": "Excel",
+    "hint": "Download this list with its current filters, all pages"
+  },
+  "priceList": {
+    "description": "What the company charges for each service, before VAT. Changes apply to new invoices only.",
+    "add": "Add service",
+    "service": "Service",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)",
+    "price": "Price",
+    "priceHint": "Before VAT, in SAR",
+    "unit": "Charged",
+    "view_active": "Active",
+    "view_inactive": "Inactive",
+    "view_all": "All",
+    "search": "Search name or code",
+    "count": "{count, plural, =1 {1 service} other {# services}}",
+    "emptyTitle": "No services priced yet",
+    "emptyBody": "Add each service you offer with its price.",
+    "emptyBodyReadOnly": "Finance adds services and their prices here."
   }
 }

@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { ActionButton, FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, PageTabs, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -105,7 +106,9 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               { key: "status", type: "select", label: t("common.status"), allLabel: t("tasks.openOnly"), options: TASK_STATUSES.map((s) => ({ value: s, label: t(`enums.TaskStatus.${s}`) })) },
               { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
             ]}
-          />
+          >
+            {can(actor, "report:export") && <ExportButton list="tasks" extra={{ view }} />}
+          </FilterBar>
           <RecordTable
             rows={rows}
             rowKey={(r) => r.id}

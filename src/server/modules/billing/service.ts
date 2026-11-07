@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { getLocale } from "next-intl/server";
 import { db, type Tx } from "@/server/db";
 import { writeAudit } from "@/server/audit";
 import { conflict, forbidden, invalid, notFound } from "@/server/errors";
@@ -273,6 +274,15 @@ export async function createInvoice(actor: Actor, input: InvoiceInput) {
     include: { rateCards: { where: activeOn() } },
   });
   let amount = input.amount;
+  let description = input.description;
+  // A service from the price list fills in whatever was left blank.
+  if (input.serviceId) {
+    const service = await db.servicePrice.findFirst({ where: { id: input.serviceId, active: true } });
+    if (!service) throw invalid("errors.validation", [{ path: "serviceId", message: "validation.required" }]);
+    amount ??= service.price.toString();
+    description ??= service.nameAr && (await getLocale()) === "ar" ? service.nameAr : service.nameEn;
+  }
+  if (!description) throw invalid("errors.validation", [{ path: "description", message: "validation.required" }]);
   // A renewal defaults to the fee agreed in the client's contract, per employee.
   if (input.type === "SPONSORSHIP_RENEWAL" && !amount) {
     const fee = contract?.rateCards[0]?.sponsorshipRenewalFee;
@@ -296,10 +306,10 @@ export async function createInvoice(actor: Actor, input: InvoiceInput) {
         total: totals.total.toString(),
         poNumber: input.poNumber,
         notes: input.notes,
-        lines: { create: { position: 0, description: input.description, sourceType: "MANUAL", quantity: qty, unitAmount: amount!, amount: lineAmount.toString() } },
+        lines: { create: { position: 0, description, sourceType: "MANUAL", quantity: qty, unitAmount: amount!, amount: lineAmount.toString() } },
       },
     });
-    await writeAudit(tx, { actorId: actor.id, entityType: "invoice", entityId: row.id, action: "create", after: { name: input.description, total: totals.total.toString() } });
+    await writeAudit(tx, { actorId: actor.id, entityType: "invoice", entityId: row.id, action: "create", after: { name: description, total: totals.total.toString() } });
     return { id: row.id };
   });
 }

@@ -11,6 +11,7 @@ import { formatDate, toDateOnly, todayDate } from "@/lib/dates";
 import { add, formatMoney, money } from "@/lib/money";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { ActionButton, FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, RecordTable } from "@/components/patterns/record";
@@ -45,7 +46,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             { key: "q", type: "search", label: t("billing.searchPayments") },
             { key: "client", type: "select", label: t("employees.client"), allLabel: t("employees.allClients"), options: clients },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="payments" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(p) => p.id}

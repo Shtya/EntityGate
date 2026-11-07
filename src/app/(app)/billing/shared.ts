@@ -7,10 +7,11 @@ type T = (key: string) => string;
 export const INVOICE_TONE = { DRAFT: "neutral", PENDING_APPROVAL: "info", ISSUED: "primary", PARTIALLY_PAID: "accent", PAID: "success", DISPUTED: "warning", VOID: "neutral" } as const;
 export const RUN_TONE = { DRAFT: "neutral", APPROVED: "info", ISSUED: "success", CANCELLED: "neutral" } as const;
 
-export const invoiceFields = (t: T, clients: Option[]): FieldSpec[] => [
+export const invoiceFields = (t: T, clients: Option[], services: Option[] = []): FieldSpec[] => [
   { name: "clientId", label: t("employees.client"), type: "select", required: true, options: clients },
   { name: "type", label: t("billing.invoiceType"), type: "select", required: true, options: (["ONE_OFF", "SPONSORSHIP_RENEWAL"] as const).map((k) => ({ value: k, label: t(`enums.InvoiceType.${k}`) })) },
-  { name: "description", label: t("billing.lineDescription"), required: true, wide: true },
+  ...(services.length ? [{ name: "serviceId", label: t("billing.service"), type: "select", wide: true, options: services, hint: t("billing.serviceHint") } satisfies FieldSpec] : []),
+  { name: "description", label: t("billing.lineDescription"), wide: true },
   { name: "amount", label: t("billing.unitAmount"), type: "money", hint: t("billing.unitAmountHint") },
   { name: "quantity", label: t("billing.quantity"), type: "number" },
   { name: "poNumber", label: t("billing.po"), ltr: true },

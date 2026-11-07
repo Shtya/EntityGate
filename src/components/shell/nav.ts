@@ -1,4 +1,4 @@
-import { BarChart3, BellRing, Database, Settings, Building2, CalendarCheck, HandCoins, Landmark, ReceiptText, TrendingUp, Wallet, FolderKanban, IdCard, LayoutGrid, ListChecks, ShieldAlert, ScrollText, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { Tags, BarChart3, BellRing, Database, Settings, Building2, CalendarCheck, HandCoins, Landmark, ReceiptText, TrendingUp, Wallet, FolderKanban, IdCard, LayoutGrid, ListChecks, ShieldAlert, ScrollText, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 import type { PermissionKey } from "@/server/rbac/catalog";
 
 export interface NavItem {
@@ -32,6 +32,7 @@ export const NAV: NavSection[] = [
     labelKey: "nav.money",
     items: [
       { labelKey: "nav.billing", href: "/billing", icon: ReceiptText, permission: "invoice:read", key: "b" },
+      { labelKey: "nav.priceList", href: "/billing/price-list", icon: Tags, permission: "invoice:read" },
       { labelKey: "nav.pnl", href: "/finance/pnl", icon: TrendingUp, permission: "finance:read", key: "p" },
       { labelKey: "nav.expenses", href: "/finance/expenses", icon: Wallet, permission: "expense:read" },
       { labelKey: "nav.payroll", href: "/finance/payroll", icon: HandCoins, permission: "payroll:read" },

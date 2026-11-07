@@ -44,7 +44,7 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
       <div className="mb-6 flex justify-end print:hidden"><PrintButton label={t("billing.print")} /></div>
       <header className="flex items-start justify-between border-b border-black/20 pb-5">
         <div className="flex items-center gap-3">
-          <BrandMark size={36} />
+          <BrandMark size={40} fixed />
           <div>
             <p className="text-base font-semibold">{company.name}</p>
             {company.address && <p className="text-xs text-black/60">{company.address}</p>}

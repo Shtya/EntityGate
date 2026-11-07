@@ -4,16 +4,16 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 
 export type Theme = "light" | "dark";
 const ThemeContext = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
-  theme: "light",
+  theme: "dark",
   setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("dark");
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("eg-theme") === "dark") setThemeState("dark");
+      if (localStorage.getItem("eg-theme") === "light") setThemeState("light");
     } catch {}
   }, []);
 

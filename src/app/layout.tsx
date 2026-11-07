@@ -21,13 +21,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fcfbf8" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1d23" },
+    { media: "(prefers-color-scheme: light)", color: "#0b1a33" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1a33" },
   ],
 };
 
-/** Applies the saved theme before paint to avoid a flash. Light is the default. */
-const themeScript = `(function(){try{if(localStorage.getItem('eg-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}})()`;
+/** Applies the saved theme before paint to avoid a flash. Dark is the default; people who chose light keep it. */
+const themeScript = `(function(){try{if(localStorage.getItem('eg-theme')!=='light')document.documentElement.classList.add('dark')}catch(e){}})()`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [locale, messages, timeZone, requestHeaders] = await Promise.all([getLocale(), getMessages(), getTimeZone(), headers()]);

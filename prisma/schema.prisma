@@ -1371,3 +1371,26 @@ model RateLimit {
 
   @@map("rate_limits")
 }
+
+enum ServiceUnit {
+  PER_REQUEST
+  PER_EMPLOYEE
+  PER_MONTH
+  PER_YEAR
+}
+
+/// The price list: what the company charges for each service, before VAT.
+model ServicePrice {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameEn    String      @map("name_en")
+  nameAr    String?     @map("name_ar")
+  unit      ServiceUnit @default(PER_REQUEST)
+  price     Decimal     @db.Decimal(14, 2)
+  notes     String?
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("service_prices")
+}

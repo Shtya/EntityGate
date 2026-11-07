@@ -7,6 +7,7 @@ import { CLIENT_STATUSES, listClientsQuery } from "@/server/modules/clients/sche
 import { activeUserOptions, listClients } from "@/server/modules/clients/service";
 import { Forbidden } from "@/components/patterns/forbidden";
 import { FormButton } from "@/components/patterns/form-dialog";
+import { ExportButton } from "@/components/patterns/export-button";
 import { FilterBar, ListPager } from "@/components/patterns/list";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Code, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -44,7 +45,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             { key: "status", type: "select", label: t("clients.filterStatus"), allLabel: t("clients.allStatuses"), options: CLIENT_STATUSES.map((s) => ({ value: s, label: t(`enums.ClientStatus.${s}`) })) },
             { key: "owner", type: "select", label: t("clients.filterOwner"), allLabel: t("clients.allOwners"), options: owners },
           ]}
-        />
+        >
+          {can(actor, "report:export") && <ExportButton list="clients" />}
+        </FilterBar>
         <RecordTable
           rows={rows}
           rowKey={(c) => c.id}

@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/misc";
 
 export default function Loading() {
   return (
-    <>
-      <div className="grid gap-2 pb-2" aria-busy="true">
+    <div className="loading-delayed" aria-busy="true">
+      <div className="grid gap-2 pb-2">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-6 w-64" />
       </div>
@@ -16,6 +16,6 @@ export default function Loading() {
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }

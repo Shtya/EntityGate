@@ -4,7 +4,7 @@ import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Tooltip as T } from "radix-ui";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { directionOf } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { BrandMark, Wordmark } from "./brand";
@@ -26,7 +26,14 @@ export function Sidebar({
   onCloseDrawer: () => void;
 }) {
   const t = useTranslations();
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
+  // The clicked item shows as current immediately, before the next page has finished loading.
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  useEffect(() => setPendingHref(null), [pathname]);
+  const current = pendingHref ?? pathname;
+  const hrefs = nav.flatMap((s) => s.items.map((i) => i.href));
+  // The longest matching link wins, so /billing/price-list doesn't also light up /billing.
+  const best = hrefs.filter((h) => (h === "/" ? current === "/" : current === h || current.startsWith(h + "/"))).sort((a, b) => b.length - a.length)[0];
+  const isActive = (href: string) => href === best;
   const Toggle = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
@@ -35,7 +42,7 @@ export function Sidebar({
         <div className="flex h-[var(--header-h)] shrink-0 items-center ps-[22px]">
           <Link href="/" prefetch={false} aria-label={t("shell.home")} className="flex items-center gap-2.5 rounded-md">
             <BrandMark size={28} />
-            <span className="nav-label">
+            <span className="nav-label" dir="ltr">
               <Wordmark textOnly />
             </span>
           </Link>
@@ -58,7 +65,7 @@ export function Sidebar({
               <ul className="grid grid-cols-[minmax(0,1fr)] gap-0.5">
                 {section.items.map((item) => (
                   <li key={item.href} className="min-w-0">
-                    <SideLink item={item} active={isActive(item.href)} />
+                    <SideLink item={item} active={isActive(item.href)} onNavigate={() => item.href !== pathname && setPendingHref(item.href)} />
                   </li>
                 ))}
               </ul>
@@ -84,7 +91,7 @@ export function Sidebar({
 }
 
 /** Tooltip appears only when the label can't be read: on the rail, or when it's truncated. */
-function SideLink({ item, active }: { item: NavItem; active: boolean }) {
+function SideLink({ item, active, onNavigate }: { item: NavItem; active: boolean; onNavigate: () => void }) {
   const t = useTranslations();
   const locale = useLocale();
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -103,6 +110,7 @@ function SideLink({ item, active }: { item: NavItem; active: boolean }) {
       <T.Trigger asChild>
         <Link
           href={item.href}
+          onClick={(e) => !e.metaKey && !e.ctrlKey && !e.shiftKey && onNavigate()}
           aria-current={active ? "page" : undefined}
           aria-label={label}
           className={cn(
