@@ -72,6 +72,7 @@ export const PERMISSIONS = {
   "role:read": "View roles and permissions",
   "role:manage": "Edit roles and permissions",
   "master_data:manage": "Manage reference data",
+  "system:reset": "Clear demo data (administrators only)",
   "reminder_rule:manage": "Manage reminder rules",
   "audit:read": "View audit log",
   "integration:manage": "Manage integrations",
@@ -209,7 +210,7 @@ const GROUP_PREFIXES: { key: string; prefixes: string[] }[] = [
   { key: "operations", prefixes: ["task", "case", "escalation"] },
   { key: "finance", prefixes: ["invoice", "billing_run", "payment", "expense", "payroll", "payable", "period", "finance"] },
   { key: "reporting", prefixes: ["dashboard", "report"] },
-  { key: "admin", prefixes: ["user", "role", "master_data", "reminder_rule", "audit", "integration"] },
+  { key: "admin", prefixes: ["user", "role", "system", "master_data", "reminder_rule", "audit", "integration"] },
 ];
 
 /** Every permission exactly once: pages first, then by business area. */

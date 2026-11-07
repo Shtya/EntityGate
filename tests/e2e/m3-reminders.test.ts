@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { api, BASE, canManage, session, uniq } from "./helpers";
 
+// Each reminder run scans the whole database, several times per test.
+vi.setConfig({ testTimeout: 180_000 });
 const db = new PrismaClient();
 afterAll(() => db.$disconnect());
 const admin = session.admin;

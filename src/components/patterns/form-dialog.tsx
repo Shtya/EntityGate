@@ -18,7 +18,7 @@ import { Select, type Option } from "@/components/ui/select";
 export interface FieldSpec {
   name: string;
   label: string;
-  type?: "text" | "email" | "tel" | "number" | "money" | "date" | "select" | "textarea" | "checkbox" | "file";
+  type?: "text" | "email" | "tel" | "password" | "number" | "money" | "date" | "select" | "textarea" | "checkbox" | "file";
   options?: Option[];
   required?: boolean;
   hint?: string;
@@ -161,7 +161,8 @@ export function FormDialog({
                   ) : (
                     <Input
                       id={f.name}
-                      type={f.type === "email" || f.type === "tel" ? f.type : "text"}
+                      type={f.type === "email" || f.type === "tel" || f.type === "password" ? f.type : "text"}
+                      autoComplete={f.type === "password" ? "current-password" : undefined}
                       inputMode={f.type === "money" ? "decimal" : f.type === "number" ? "numeric" : undefined}
                       dir={f.ltr || f.type === "email" || f.type === "tel" || f.type === "money" || f.type === "number" ? "ltr" : undefined}
                       aria-invalid={!!errors[f.name]}

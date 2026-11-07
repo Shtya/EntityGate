@@ -128,7 +128,7 @@ export const REPORTS: ReportDef[] = [
     key: "headcount",
     permission: "employee:read",
     usesPeriod: false,
-    columns: [{ key: "number", label: "employees.number" }, { key: "name", label: "finance.employee" }, { key: "classification", label: "employees.classification", enumNs: "enums.Classification" }, { key: "sponsor", label: "employees.sponsor" }, CLIENT, { key: "from", label: "reports.since", type: "date" }],
+    columns: [{ key: "number", label: "employees.employeeNo" }, { key: "name", label: "finance.employee" }, { key: "classification", label: "employees.classification", enumNs: "enums.WorkerClassification" }, { key: "sponsor", label: "employees.sponsor" }, CLIENT, { key: "from", label: "reports.since", type: "date" }],
     run: async (_actor, { client }) => {
       const today = todayDate();
       const rows = await db.allocation.findMany({

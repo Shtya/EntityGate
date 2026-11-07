@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Readex_Pro } from "next/font/google";
 import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTimeZone } from "next-intl/server";
@@ -10,7 +10,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument-serif", display: "swap" });
-const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600", "700"], variable: "--font-plex-arabic", display: "swap" });
+const arabic = Readex_Pro({ subsets: ["arabic"], variable: "--font-readex", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "EntityGate", template: "%s · EntityGate" },

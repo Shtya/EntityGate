@@ -56,7 +56,9 @@ async function main() {
       await tx.contract.deleteMany({ where: byClient });
       await tx.client.deleteMany({ where: { id: { in: clientIds } } });
       await tx.payable.deleteMany({ where: { description: { startsWith: "E2E " } } });
-      await tx.notification.deleteMany({ where: { title: { startsWith: "E2E " } } });
+      await tx.sponsor.deleteMany({ where: { name: { startsWith: "E2E " } } });
+      await tx.expenseCategory.deleteMany({ where: { code: { startsWith: "E2E_" }, expenses: { none: {} } } });
+      await tx.notification.deleteMany({ where: { OR: [{ title: { startsWith: "E2E " } }, { body: null }, { body: "{}" }, { body: { contains: "E2E " } }] } });
     },
     { timeout: 120_000, maxWait: 15_000 },
   );

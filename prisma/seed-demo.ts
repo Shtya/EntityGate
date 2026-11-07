@@ -59,7 +59,7 @@ async function main() {
     return;
   }
   console.log(`Loading demo data through ${BASE}…`);
-  const [head, hr, finance, ops] = await Promise.all([signIn("head@entitygate.test"), signIn("hr@entitygate.test"), signIn("finance@entitygate.test"), signIn("ops@entitygate.test")]);
+  const [head, hr, finance] = await Promise.all([signIn("head@entitygate.test"), signIn("hr@entitygate.test"), signIn("finance@entitygate.test")]);
   const users = new Map((await db.user.findMany({ where: { email: { endsWith: "@entitygate.test" } } })).map((u) => [u.email.split("@")[0], u.id]));
   const start = iso(monthsAgo(6));
   const sponsors = await db.sponsor.findMany({ select: { id: true } });
@@ -138,8 +138,8 @@ async function main() {
   for (const [i, [title, due, priority]] of tasks.entries()) {
     await call(head, "/tasks", { title, ownerId: owners[i % 2], clientId: clients[i % 2 === 0 ? 0 : 2].id, dueAt: addDays(due), priority });
   }
-  await call(ops, "/escalations", { title: "Iqama renewals blocked at Muqeem", severity: "HIGH", ownerId: users.get("ops"), clientId: clients[1].id, impactAmount: "42000.00" });
-  await call(ops, "/escalations", { title: "Disputed fee on last invoice", severity: "CRITICAL", ownerId: users.get("head"), clientId: clients[3].id, impactAmount: "108226.00" });
+  await call(head, "/escalations", { title: "Iqama renewals blocked at Muqeem", severity: "HIGH", ownerId: users.get("ops"), clientId: clients[1].id, impactAmount: "42000.00" });
+  await call(head, "/escalations", { title: "Disputed fee on last invoice", severity: "CRITICAL", ownerId: users.get("head"), clientId: clients[3].id, impactAmount: "108226.00" });
 
   for (const [type, description, due, amount] of [["SALARY", "Salaries for this month", 2, "198000"], ["GOSI", "GOSI contributions", 10, "21400"], ["GOV_FEE", "Work permit renewals", -3, "8600"]] as const) {
     await call(finance, "/payables", { type, description, dueDate: addDays(due), amount });

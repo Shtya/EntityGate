@@ -1,4 +1,4 @@
-import { BarChart3, BellRing, Database, Building2, CalendarCheck, HandCoins, Landmark, ReceiptText, TrendingUp, Wallet, FolderKanban, IdCard, LayoutGrid, ListChecks, ShieldAlert, ScrollText, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, BellRing, Database, Settings, Building2, CalendarCheck, HandCoins, Landmark, ReceiptText, TrendingUp, Wallet, FolderKanban, IdCard, LayoutGrid, ListChecks, ShieldAlert, ScrollText, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 import type { PermissionKey } from "@/server/rbac/catalog";
 
 export interface NavItem {
@@ -48,6 +48,7 @@ export const NAV: NavSection[] = [
       { labelKey: "nav.masterData", href: "/admin/master-data", icon: Database, permission: "master_data:manage" },
       { labelKey: "nav.reminders", href: "/admin/reminders", icon: BellRing, permission: "reminder_rule:manage" },
       { labelKey: "nav.audit", href: "/admin/audit", icon: ScrollText, permission: "audit:read", key: "a" },
+      { labelKey: "nav.settings", href: "/settings/system", icon: Settings, permission: "system:reset" },
     ],
   },
 ];

@@ -59,7 +59,8 @@
     "payables": "Payables",
     "periods": "Month close",
     "reports": "Reports",
-    "masterData": "Reference data"
+    "masterData": "Reference data",
+    "settings": "Settings"
   },
   "shell": {
     "home": "EntityGate home",
@@ -302,7 +303,10 @@
     "reactivate": "Reactivate",
     "reactivated": "User reactivated",
     "updateFailed": "Update failed",
-    "resetFailed": "Reset failed"
+    "resetFailed": "Reset failed",
+    "twoFactorResetTitle": "Reset two-factor",
+    "twoFactorResetBody": "For a lost device. Signs them out, and they set it up again at next sign-in.",
+    "twoFactorResetDone": "Two-factor reset"
   },
   "userStatus": {
     "ACTIVE": "Active",
@@ -565,7 +569,8 @@
     "audit:read": "View audit log",
     "integration:manage": "Manage integrations",
     "payable:read": "View what the company owes",
-    "payable:manage": "Add and settle payables"
+    "payable:manage": "Add and settle payables",
+    "system:reset": "Clear demo data (administrators only)"
   },
   "access": {
     "title": "Permissions for this person",
@@ -1406,5 +1411,30 @@
     "holidayHint": "Skipped when counting working hours for escalation updates.",
     "empty": "Nothing here yet",
     "noHolidays": "No holidays added"
+  },
+  "system": {
+    "description": "System-wide actions for administrators.",
+    "clearTitle": "Clear the demo data",
+    "clearHint": "When you've finished looking around, start clean with your real data.",
+    "clients": "Clients",
+    "employees": "Employees",
+    "invoices": "Invoices",
+    "users": "Accounts",
+    "removedTitle": "What gets removed",
+    "removedBody": "All clients, employees, invoices, payments, expenses, payroll, cases, tasks, files and notifications, the audit log, and every other account. Invoice numbering restarts.",
+    "keptTitle": "What stays",
+    "keptBody": "Your account ({email}), roles and permissions, and the reference lists: regions, locations, sponsors, categories, holidays and reminder rules.",
+    "onceOnly": "This can't be undone, and it can only be done once.",
+    "clearButton": "Clear all demo data",
+    "clearConfirmTitle": "Clear everything?",
+    "clearConfirmBody": "This permanently deletes the data listed on this page.",
+    "typePhraseLabel": "Type {phrase} to confirm",
+    "yourPassword": "Your password",
+    "typePhrase": "Type the word exactly as shown",
+    "wrongPassword": "That password isn't correct",
+    "alreadyCleared": "The demo data has already been cleared",
+    "clearedToast": "Demo data cleared. The system is ready for your data.",
+    "clearedTitle": "The demo data has been cleared",
+    "clearedBody": "Done by {name} on {date}. Everything in the system now is real data, so this action is no longer available."
   }
 }

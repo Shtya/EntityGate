@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Check, Copy, KeyRound, Plus, Search, ShieldCheck, UserX, UserCheck } from "lucide-react";
+import { Check, Copy, KeyRound, Plus, Search, ShieldCheck, ShieldOff, UserX, UserCheck } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -375,6 +375,19 @@ function UserSheet({
     }
   }
 
+  async function resetTwoFactor() {
+    setBusy("two-factor");
+    try {
+      await api(`/users/${user.id}/reset-two-factor`, { method: "POST", json: {} });
+      toast.success(t("users.twoFactorResetDone"));
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : t("users.resetFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function resetPassword() {
     setBusy("reset");
     try {
@@ -448,6 +461,14 @@ function UserSheet({
                 body={t("users.resetBody")}
                 button={<Button variant="secondary" size="sm" loading={busy === "reset"} onClick={resetPassword}>{t("users.reset")}</Button>}
               />
+              {user.twoFactorEnabled && (
+                <Action
+                  icon={<ShieldOff />}
+                  title={t("users.twoFactorResetTitle")}
+                  body={t("users.twoFactorResetBody")}
+                  button={<Button variant="secondary" size="sm" loading={busy === "two-factor"} onClick={resetTwoFactor}>{t("users.reset")}</Button>}
+                />
+              )}
               {user.status === "ACTIVE" ? (
                 <Action
                   icon={<UserX />}

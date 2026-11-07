@@ -44,6 +44,12 @@ These live on each client's contract rather than in the code, so they can differ
 
 To change a fee, add a new rate card with its start date. Past invoices keep the old rate.
 
+## Starting clean
+
+**Settings > Clear all demo data** removes every client, employee, invoice, payment, expense, case, task, file, notification and audit entry, and every account except yours. Roles, permissions and reference lists stay, and invoice numbering restarts.
+
+It asks for the word `CLEAR` and your password, can't be undone, and only works once. After that the data is treated as real and the button is gone. Only administrators see it.
+
 ## Exports
 
 Excel, CSV and print each need **Export reports** as well as access to that report. Each one records who exported what, with which filters and how many rows.

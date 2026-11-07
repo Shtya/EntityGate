@@ -61,7 +61,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const showNet = data.companyView && can(actor, "dashboard:executive");
   const trendPoints = trend?.map((r) => ({ period: r.id, revenue: r.pnl.revenue.toNumber(), cost: r.pnl.directCost.toNumber() })) ?? [];
   const hasTrend = trendPoints.some((p) => p.revenue !== 0 || p.cost !== 0);
-  const classes = headcount ? (["SPONSORED", "NON_SPONSORED", "GOSI"] as const).map((c) => ({ label: t(`enums.Classification.${c}`), value: headcount[c], href: `/employees?classification=${c}` })).filter((x) => x.value > 0) : [];
+  const classes = headcount ? (["SPONSORED", "NON_SPONSORED", "GOSI"] as const).map((c) => ({ label: t(`enums.WorkerClassification.${c}`), value: headcount[c], href: `/employees?classification=${c}` })).filter((x) => x.value > 0) : [];
 
   return (
     <>

@@ -221,10 +221,10 @@
   --color-ring: var(--ring);
   --color-overlay: var(--overlay);
 
-  --font-sans: var(--font-geist), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist), var(--font-readex), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-instrument-serif), Georgia, serif;
-  --font-arabic: var(--font-plex-arabic), var(--font-geist), sans-serif;
+  --font-arabic: var(--font-readex), var(--font-geist), sans-serif;
 
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
@@ -527,6 +527,21 @@
     scrollbar-width: thin;
     scrollbar-color: var(--thumb) transparent;
   }
+}
+
+/* Browsers put a scrollbar on the element's start side. The sidebar flips its own direction so the
+   bar sits on the outer edge (left in English, right in Arabic), then flips its content back. */
+.side-scroll {
+  direction: rtl;
+}
+.side-scroll > * {
+  direction: ltr;
+}
+[dir="rtl"] .side-scroll {
+  direction: ltr;
+}
+[dir="rtl"] .side-scroll > * {
+  direction: rtl;
 }
 
 /* Table: horizontal scrollbar pinned above the sticky footer, never mid-table */

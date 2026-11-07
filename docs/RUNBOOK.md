@@ -24,6 +24,15 @@ For whoever deploys and looks after the system. Commands run from the project ro
 
 Never run `npm run db:seed` or `npm run seed:demo` in production. Both refuse when `NODE_ENV=production`.
 
+## Going live with the demo data first
+
+To let the company look around before starting for real, deploy against the database that already holds the demo data, instead of running `db:bootstrap`. Until the data is cleared:
+
+- Change the administrator's password first. Every demo account shares one known password, so keep the site private.
+- When they're ready, an administrator opens **Settings > Clear all demo data**. Only their account, the setup and the reference lists remain.
+
+The app needs a long-running Node server and a disk that survives restarts for uploads, because reminders run inside the process and files are stored in `STORAGE_DIR`. Serverless hosting doesn't fit without changing both.
+
 ## Database connections
 
 The app opens up to `DB_POOL_SIZE` connections (default 5) plus 3 for the scheduler, per instance. Supabase's session pooler allows 15 in total, and going over it locks out every client with `EMAXCONNSESSION`. Keep the sum under the limit, or use a larger pool size if you run more instances.

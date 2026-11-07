@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   // The dev badge sat on top of the sidebar's collapse control and misled layout reviews.
   devIndicators: false,
   serverExternalPackages: ["@node-rs/argon2", "pg-boss", "exceljs", "nodemailer"],
+  // ExcelJS reaches these packages through a conditional export the build's file tracing misses,
+  // which crashed every page that loads it in the deployed bundle.
+  outputFileTracingIncludes: { "/**/*": ["./node_modules/generator-function/**/*", "./node_modules/async-function/**/*", "./node_modules/set-cookie-parser/**/*"] },
   async headers() {
     return [
       {

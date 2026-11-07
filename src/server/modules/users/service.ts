@@ -163,6 +163,21 @@ export async function resetUserPassword(actor: Actor, id: string) {
   return { temporaryPassword: password };
 }
 
+/** For a lost device. They enroll again at next sign-in, and any open session ends now. */
+export async function resetUserTwoFactor(actor: Actor, id: string) {
+  const user = await db.user.findUnique({ where: { id }, select: { id: true, userRoles: { select: { role: { select: { key: true } } } } } });
+  if (!user) throw notFound("errors.userNotFound");
+  if (id === actor.id) throw forbidden();
+  if (!isAdmin(actor) && user.userRoles.some((r) => r.role.key === ADMIN_ROLE)) throw forbidden("errors.adminOnly");
+  await db.$transaction(async (tx) => {
+    await tx.twoFactor.deleteMany({ where: { userId: id } });
+    await tx.user.update({ where: { id }, data: { twoFactorEnabled: false } });
+    await tx.session.deleteMany({ where: { userId: id } });
+    await writeAudit(tx, { actorId: actor.id, entityType: "user", entityId: id, action: "two_factor_reset" });
+  });
+  return { id };
+}
+
 export async function listRolesWithPermissions() {
   return db.role.findMany({
     orderBy: { name: "asc" },

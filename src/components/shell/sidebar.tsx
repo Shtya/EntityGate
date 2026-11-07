@@ -50,7 +50,8 @@ export function Sidebar({
           )}
         </div>
 
-        <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-clip px-4 pb-4 pt-2 scroll-thin">
+        <nav className="side-scroll min-h-0 flex-1 overflow-y-auto overflow-x-clip scroll-thin">
+          <div className="px-4 pb-4 pt-2">
           {nav.map((section) => (
             <div key={section.labelKey} className="mb-5">
               <p className="nav-label eyebrow mb-1.5 truncate px-3">{t(section.labelKey)}</p>
@@ -63,6 +64,7 @@ export function Sidebar({
               </ul>
             </div>
           ))}
+          </div>
         </nav>
 
         <div className="hidden shrink-0 px-4 pb-4 lg:block">
