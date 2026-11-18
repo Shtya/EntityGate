@@ -9,7 +9,9 @@ import { getClientScope } from "@/server/rbac/actor";
 import { activeOn, dateOnly, nextNumber, pad } from "@/server/util";
 import { PAGE_SIZE } from "@/server/validation";
 import { periodBounds, periodOf, todayDate } from "@/lib/dates";
-import { agingSummary, allocationBill, invoiceTotals, monthlyCost, outstanding, paymentState, type RateInput } from "@/lib/finance";
+import { agingSummary, invoiceTotals, outstanding, paymentState } from "@/lib/finance";
+import { INVOICE_PARTS, servicesOn, type InvoicePart, type ServiceRules } from "@/lib/breakdown";
+import { clientServiceRules, placementRow } from "./breakdown";
 import { add, money, round2, vatOf } from "@/lib/money";
 import type { InvoiceInput, ListInvoicesQuery, PaymentInput } from "./schema";
 
@@ -30,72 +32,85 @@ async function assertAccess(clientId: string) {
 type RunWarning = { client: string; employee: string; kind: "noPay" };
 
 type RunContract = Prisma.ContractGetPayload<{ include: { rateCards: true; client: { select: { id: true; displayName: true } } } }>;
-type RunAllocation = Prisma.AllocationGetPayload<{ include: { employee: { select: { id: true; nameEn: true; compensations: true } } } }>;
+type RunAllocation = Prisma.AllocationGetPayload<{ include: { location: { select: { region: { select: { name: true } } } }; employee: { select: { id: true; nameEn: true; joinedAt: true; compensations: true } } } }>;
 type RunExpense = Prisma.ExpenseGetPayload<object>;
 
-/** Builds one client's draft: employees, fees, then recoverable costs nobody has billed yet. */
-async function buildClientDraft(tx: Tx, runId: string, period: string, contract: RunContract, allocations: RunAllocation[], expenses: RunExpense[]) {
-  const { start, end, days } = periodBounds(period);
+/**
+ * Builds one client's drafts for the month. The payroll invoice carries each employee's services
+ * that the client routes to payroll; when the client routes any to expenses, those go on a second,
+ * separate invoice, with the recoverable costs nobody has billed yet.
+ */
+async function buildClientDraft(tx: Tx, runId: string, period: string, contract: RunContract, allocations: RunAllocation[], expenses: RunExpense[], rules: ServiceRules) {
+  const { start, end } = periodBounds(period);
   const lastDay = new Date(end.getTime() - 86_400_000);
   const card = contract.rateCards.find((r) => r.effectiveFrom <= lastDay && (!r.effectiveTo || r.effectiveTo > lastDay));
-  if (!card) return { invoice: null, warnings: [] as RunWarning[] };
-  const rate: RateInput = { model: contract.billingModel, feePercent: card.feePercent?.toString(), feePerHead: card.feePerHead?.toString(), feeFixedMonthly: card.feeFixedMonthly?.toString() };
-
+  if (!card) return { invoices: [] as { id: string }[], warnings: [] as RunWarning[] };
   const warnings: RunWarning[] = [];
-  const lines: Prisma.InvoiceLineUncheckedCreateWithoutInvoiceInput[] = [];
-  let position = 0;
+  const hasExpensesInvoice = servicesOn(rules, "EXPENSES", card.billEndOfService).length > 0;
+  const parts: Record<InvoicePart, Prisma.InvoiceLineUncheckedCreateWithoutInvoiceInput[]> = { PAYROLL: [], EXPENSES: [] };
 
+  // Each employee is billed the way the client's own breakdown sheet works (see lib/breakdown.ts).
   for (const a of allocations) {
-    const bill = allocationBill(a.effectiveFrom, a.effectiveTo, a.employee.compensations.map((c) => ({ from: c.effectiveFrom, to: c.effectiveTo, monthly: monthlyCost(c) })), period, rate);
-    if (bill.daysActive === 0) continue;
-    if (bill.cost.isZero()) warnings.push({ client: contract.client.displayName, employee: a.employee.nameEn, kind: "noPay" });
-    lines.push({
-      position: position++,
-      description: `${a.employee.nameEn} (${bill.daysActive}/${days})`,
-      sourceType: "ALLOCATION",
-      allocationId: a.id,
-      employeeId: a.employee.id,
-      quantity: money(bill.daysActive).dividedBy(days).toDecimalPlaces(4).toString(),
-      unitAmount: bill.amount.toString(),
-      amount: bill.amount.toString(),
-      costAmount: bill.cost.toString(),
-    });
-  }
-
-  if (contract.billingModel === "COST_PLUS_FIXED" && lines.length && card.feeFixedMonthly) {
-    const fee = round2(card.feeFixedMonthly.toString());
-    lines.push({ position: position++, description: "Monthly service fee", sourceType: "FEE", unitAmount: fee.toString(), amount: fee.toString(), costAmount: "0" });
-  }
-  if (!lines.length && !expenses.length) return { invoice: null, warnings };
-
-  const expensePositions = new Map<number, string>();
-  for (const e of expenses) {
-    expensePositions.set(position, e.id);
-    lines.push({ position: position++, description: e.description, sourceType: "EXPENSE", employeeId: e.employeeId, unitAmount: e.amount, amount: e.amount, costAmount: e.amount });
-  }
-  const totals = invoiceTotals(lines.map((l) => String(l.amount)), contract.vatRate.toString());
-  const invoice = await tx.invoice.create({
-    data: {
-      clientId: contract.clientId,
-      billingRunId: runId,
-      type: "MONTHLY",
-      periodStart: start,
-      periodEnd: lastDay,
-      currency: contract.currency,
-      vatRate: contract.vatRate,
-      subtotal: totals.subtotal.toString(),
-      vatAmount: totals.vat.toString(),
-      total: totals.total.toString(),
-      lines: { create: lines },
-    },
-    include: expensePositions.size ? { lines: { where: { sourceType: "EXPENSE" }, select: { id: true, position: true } } } : undefined,
-  });
-  if (expensePositions.size) {
-    for (const line of (invoice as unknown as { lines: { id: string; position: number }[] }).lines) {
-      await tx.expense.update({ where: { id: expensePositions.get(line.position)! }, data: { billedLineId: line.id } });
+    for (const part of hasExpensesInvoice ? INVOICE_PARTS : (["PAYROLL"] as const)) {
+      const row = placementRow(a, period, contract.billingModel, card, rules, part);
+      if (!row) continue;
+      if (part === "PAYROLL" && row.missingPay) warnings.push({ client: contract.client.displayName, employee: a.employee.nameEn, kind: "noPay" });
+      // An employee with nothing on the expenses side this month doesn't get an empty row there.
+      if (part === "EXPENSES" && row.result.total.isZero()) continue;
+      parts[part].push({
+        position: parts[part].length,
+        description: `${a.employee.nameEn} (${row.workdays}/30)`,
+        sourceType: "ALLOCATION",
+        allocationId: a.id,
+        employeeId: a.employee.id,
+        quantity: money(row.workdays).dividedBy(30).toDecimalPlaces(4).toString(),
+        unitAmount: row.result.total.toString(),
+        amount: row.result.total.toString(),
+        costAmount: row.result.cost.toString(),
+        breakdown: { create: row.data },
+      });
     }
   }
-  return { invoice, warnings };
+
+  if (contract.billingModel === "COST_PLUS_FIXED" && parts.PAYROLL.length && card.feeFixedMonthly) {
+    const fee = round2(card.feeFixedMonthly.toString());
+    parts.PAYROLL.push({ position: parts.PAYROLL.length, description: "Monthly service fee", sourceType: "FEE", unitAmount: fee.toString(), amount: fee.toString(), costAmount: "0" });
+  }
+  // Recoverable costs follow the client's expenses invoice when there is one.
+  const expensePart: InvoicePart = hasExpensesInvoice ? "EXPENSES" : "PAYROLL";
+  const expensePositions = new Map<number, string>();
+  for (const e of expenses) {
+    expensePositions.set(parts[expensePart].length, e.id);
+    parts[expensePart].push({ position: parts[expensePart].length, description: e.description, sourceType: "EXPENSE", employeeId: e.employeeId, unitAmount: e.amount, amount: e.amount, costAmount: e.amount });
+  }
+
+  const invoices: { id: string }[] = [];
+  for (const part of INVOICE_PARTS) {
+    const lines = parts[part];
+    if (!lines.length) continue;
+    const totals = invoiceTotals(lines.map((l) => String(l.amount)), contract.vatRate.toString());
+    const invoice = await tx.invoice.create({
+      data: {
+        clientId: contract.clientId,
+        billingRunId: runId,
+        type: part === "PAYROLL" ? "MONTHLY" : "MONTHLY_EXPENSES",
+        periodStart: start,
+        periodEnd: lastDay,
+        currency: contract.currency,
+        vatRate: contract.vatRate,
+        subtotal: totals.subtotal.toString(),
+        vatAmount: totals.vat.toString(),
+        total: totals.total.toString(),
+        lines: { create: lines },
+      },
+      include: { lines: { where: { sourceType: "EXPENSE" }, select: { id: true, position: true } } },
+    });
+    if (part === expensePart) {
+      for (const line of invoice.lines) await tx.expense.update({ where: { id: expensePositions.get(line.position)! }, data: { billedLineId: line.id } });
+    }
+    invoices.push({ id: invoice.id });
+  }
+  return { invoices, warnings };
 }
 
 /** One live run per month: a second would invoice everyone twice (also enforced by a DB index). */
@@ -115,20 +130,22 @@ export async function createBillingRun(actor: Actor, period: string) {
     async (tx) => {
       const run = await tx.billingRun.create({ data: { period, createdById: actor.id } });
       const clientIds = [...byClient.keys()];
-      const [allocations, expenses] = await Promise.all([
+      const [allocations, expenses, ruleRows] = await Promise.all([
         tx.allocation.findMany({
           where: { clientId: { in: clientIds }, billable: true, effectiveFrom: { lt: end }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: start } }] },
-          include: { employee: { select: { id: true, nameEn: true, compensations: true } } },
+          include: { location: { select: { region: { select: { name: true } } } }, employee: { select: { id: true, nameEn: true, joinedAt: true, compensations: true } } },
           orderBy: { employee: { nameEn: "asc" } },
         }),
         tx.expense.findMany({ where: { clientId: { in: clientIds }, recoverable: true, status: "APPROVED", billedLineId: null, incurredAt: { lt: end } }, orderBy: { incurredAt: "asc" } }),
+        Promise.all(clientIds.map(async (id) => [id, await clientServiceRules(id)] as const)),
       ]);
+      const rulesBy = new Map(ruleRows);
       const warnings: RunWarning[] = [];
       let invoices = 0;
       for (const contract of byClient.values()) {
-        const result = await buildClientDraft(tx, run.id, period, contract, allocations.filter((a) => a.clientId === contract.clientId), expenses.filter((e) => e.clientId === contract.clientId));
+        const result = await buildClientDraft(tx, run.id, period, contract, allocations.filter((a) => a.clientId === contract.clientId), expenses.filter((e) => e.clientId === contract.clientId), rulesBy.get(contract.clientId) ?? {});
         warnings.push(...result.warnings);
-        if (result.invoice) invoices++;
+        invoices += result.invoices.length;
       }
       await writeAudit(tx, { actorId: actor.id, entityType: "billing_run", entityId: run.id, action: "create", after: { name: period, invoices } });
       return { id: run.id, invoices, warnings };

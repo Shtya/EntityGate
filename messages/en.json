@@ -614,7 +614,8 @@
     "BillingModel": {
       "COST_PLUS_PERCENT": "Cost + percentage",
       "FIXED_PER_HEAD": "Cost + fee per employee",
-      "COST_PLUS_FIXED": "Cost + fixed monthly fee"
+      "COST_PLUS_FIXED": "Cost + fixed monthly fee",
+      "PER_DAY": "Cost + fee per day worked"
     },
     "ContractStatus": {
       "DRAFT": "Draft",
@@ -757,10 +758,11 @@
       "VOID": "Void"
     },
     "InvoiceType": {
-      "MONTHLY": "Monthly invoice",
+      "MONTHLY": "Monthly payroll invoice",
       "SPONSORSHIP_RENEWAL": "Sponsorship renewal",
       "ONE_OFF": "One-off invoice",
-      "CREDIT_NOTE": "Credit note"
+      "CREDIT_NOTE": "Credit note",
+      "MONTHLY_EXPENSES": "Monthly expenses invoice"
     },
     "BillingRunStatus": {
       "DRAFT": "Draft",
@@ -906,7 +908,7 @@
     "paymentTerms": "Payment terms (days)",
     "renewalNotice": "Renewal notice (days)",
     "vat": "VAT %",
-    "feePercent": "Fee % on cost",
+    "feePercent": "Fee on direct costs (%)",
     "feePerHead": "Fee per employee / month",
     "feeFixed": "Fixed monthly fee",
     "renewalFee": "Sponsorship renewal fee",
@@ -919,7 +921,14 @@
     "rateSaved": "New rate saved",
     "terminate": "Terminate",
     "terminateConfirm": "Terminate this contract?",
-    "terminateBody": "Billing stops using it from the next run."
+    "terminateBody": "Billing stops using it from the next run.",
+    "feePercentHint": "Salary, gas support and KPI. Example: 11",
+    "feeIndirectPercent": "Fee on indirect costs (%)",
+    "feeIndirectHint": "EOS, GOSI, iqama and similar. Blank means the same as direct. Enter 0 for no fee.",
+    "feePerDay": "Fee per day worked",
+    "sameAsDirect": "Same as direct",
+    "billEos": "Bill end-of-service monthly",
+    "billEosHint": "Half a month's salary per year, billed as salary ÷ 2 ÷ 12 each month."
   },
   "employees": {
     "title": "Employees",
@@ -1010,7 +1019,10 @@
     "result_create": "New",
     "result_update": "Update",
     "importDone": "Done: {created} added, {updated} updated",
-    "expiredDays2": "{days, plural, =1 {1 day late} other {# days late}}"
+    "expiredDays2": "{days, plural, =1 {1 day late} other {# days late}}",
+    "gosiHint": "Usually 2% of salary for non-Saudi employees.",
+    "chargesHint": "Charges below are monthly. For a yearly cost, enter it ÷ 12 (2000 ÷ 12 = 166.6667).",
+    "monthlyCharges": "Monthly charges"
   },
   "notif": {
     "invoiceDue": "Invoice {number} for {client} is due on {date}",
@@ -1549,5 +1561,68 @@
     "unavailable": "One of the categories is no longer available",
     "emptyTitle": "No categories yet",
     "emptyBody": "An administrator adds them here."
+  },
+  "charges": {
+    "medical": "Medical",
+    "gosi": "GOSI",
+    "iqamaRenewal": "Iqama renewal",
+    "exitReentry": "Exit re-entry",
+    "flightTicket": "Flight ticket",
+    "iqamaTransfer": "Iqama transfer",
+    "adminFee": "Administration fee",
+    "dependantsFees": "Dependants fees",
+    "ajeer": "Ajeer",
+    "sponsorshipTransfer": "Sponsorship transfer",
+    "newVisa": "New visa",
+    "payout": "Payout",
+    "other": "Other",
+    "salary": "Salary",
+    "gasSupport": "Gas support",
+    "kpi": "KPI / incentives",
+    "eos": "End of service (EOS)"
+  },
+  "breakdown": {
+    "title": "Breakdown by employee",
+    "hint": "The client's invoice breakdown format. Download it as Excel to send with the invoice.",
+    "hintDraft": "Adjust any employee's month before issuing: days worked, deductions, extras or one-off charges.",
+    "download": "Download breakdown (Excel)",
+    "salary": "Take-home salary",
+    "workdays": "Workdays",
+    "workdaysHint": "30 for a full month, whatever its length.",
+    "deductions": "Deductions",
+    "gasSupport": "Gas support",
+    "kpi": "KPI / incentives",
+    "direct": "Direct",
+    "indirect": "Indirect",
+    "fee": "Service fee",
+    "usd": "Total in USD",
+    "standingHint": "Monthly amounts. These and end-of-service are billed for the days worked.",
+    "oneOffHint": "One-off charges for this month, billed in full.",
+    "editHint": "Changes recalculate this employee's line and the invoice totals.",
+    "saved": "Breakdown updated",
+    "titleExpenses": "Expenses breakdown by employee"
+  },
+  "services": {
+    "tab": "Services",
+    "title": "Services and fees for this client",
+    "description": "Each service is a column of the client's invoice breakdown. Choose which ones apply, which invoice each goes on, and its fee. The next billing run uses these settings; issued invoices don't change.",
+    "service": "Service",
+    "show": "Applies",
+    "showFor": "{service} applies to this client",
+    "invoice": "Invoice",
+    "part_PAYROLL": "Payroll (monthly)",
+    "part_EXPENSES": "Expenses (separate)",
+    "fee": "Our fee",
+    "fee_CONTRACT": "Contract fee ({fee})",
+    "fee_PERCENT": "Percentage of the amount",
+    "fee_FIXED": "Fixed amount",
+    "value": "Value",
+    "perEmployee": "per employee / month",
+    "groupDirect": "Direct costs",
+    "groupIndirect": "Indirect costs",
+    "noContract": "no active contract",
+    "unsaved": "Unsaved changes",
+    "saved": "Services saved. They apply from the next billing run.",
+    "fee_CONTRACT_plain": "Contract fee"
   }
 }

@@ -382,6 +382,7 @@ model Client {
 
   @@index([status])
   @@map("clients")
+  serviceRules   ClientServiceRule[]
 }
 
 model ClientContact {
@@ -433,6 +434,7 @@ enum BillingModel {
   COST_PLUS_PERCENT // cost × (1 + fee%)
   FIXED_PER_HEAD // cost + fixed fee per head per month
   COST_PLUS_FIXED // cost + fixed monthly fee for the account
+  PER_DAY // cost + fixed fee per day worked
 }
 
 model Contract {
@@ -466,6 +468,10 @@ model RateCard {
   feePerHead            Decimal?  @map("fee_per_head") @db.Decimal(14, 2)
   feeFixedMonthly       Decimal?  @map("fee_fixed_monthly") @db.Decimal(14, 2)
   sponsorshipRenewalFee Decimal?  @map("sponsorship_renewal_fee") @db.Decimal(14, 2)
+  /// Fee on indirect costs (EOS, GOSI, iqama...). Null means the same rate as direct costs.
+  feeIndirectPercent    Decimal?  @map("fee_indirect_percent") @db.Decimal(9, 4)
+  feePerDay             Decimal?  @map("fee_per_day") @db.Decimal(14, 2)
+  billEndOfService      Boolean   @default(true) @map("bill_end_of_service")
   /// Which cost components are billed through (true) vs absorbed: {"gosi":true,"insurance":true,...}
   includes              Json      @default("{}")
   createdAt             DateTime  @default(now()) @map("created_at")
@@ -583,6 +589,14 @@ model Compensation {
   other            Decimal   @default(0) @db.Decimal(14, 2)
   gosiEmployer     Decimal   @default(0) @map("gosi_employer") @db.Decimal(14, 2)
   insuranceMonthly Decimal   @default(0) @map("insurance_monthly") @db.Decimal(14, 2)
+  /// Standing monthly charges billed through to the client (a yearly cost entered as yearly ÷ 12).
+  iqamaRenewal     Decimal   @default(0) @map("iqama_renewal") @db.Decimal(14, 4)
+  exitReentry      Decimal   @default(0) @map("exit_reentry") @db.Decimal(14, 4)
+  flightTicket     Decimal   @default(0) @map("flight_ticket") @db.Decimal(14, 4)
+  iqamaTransfer    Decimal   @default(0) @map("iqama_transfer") @db.Decimal(14, 4)
+  adminFee         Decimal   @default(0) @map("admin_fee") @db.Decimal(14, 4)
+  dependantsFees   Decimal   @default(0) @map("dependants_fees") @db.Decimal(14, 4)
+  ajeer            Decimal   @default(0) @map("ajeer") @db.Decimal(14, 4)
   createdAt        DateTime  @default(now()) @map("created_at")
 
   @@index([employeeId, effectiveFrom])
@@ -956,6 +970,7 @@ enum InvoiceType {
   SPONSORSHIP_RENEWAL
   ONE_OFF
   CREDIT_NOTE
+  MONTHLY_EXPENSES // the separate monthly invoice for services a client routes to expenses
 }
 
 enum InvoiceStatus {
@@ -1031,6 +1046,7 @@ model InvoiceLine {
   /// Cost-side snapshot used for margin: what this line cost us
   costAmount   Decimal           @default(0) @map("cost_amount") @db.Decimal(14, 2)
   expenses     Expense[]
+  breakdown    InvoiceLineBreakdown?
 
   @@unique([invoiceId, position])
   @@index([allocationId])
@@ -1446,4 +1462,61 @@ model TaskEmployee {
   @@id([taskId, employeeId])
   @@index([employeeId])
   @@map("task_employees")
+}
+
+/// One employee's row of the client's invoice breakdown sheet. Monthly amounts are stored before
+/// proration, with the fee terms used, so a draft can be recalculated after an edit.
+model InvoiceLineBreakdown {
+  lineId              String       @id @map("line_id")
+  line                InvoiceLine  @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  employeeName        String       @map("employee_name")
+  region              String?
+  joinedAt            DateTime?    @map("joined_at") @db.Date
+  salary              Decimal      @db.Decimal(14, 4)
+  workdays            Decimal      @db.Decimal(6, 2)
+  deductions          Decimal      @default(0) @db.Decimal(14, 4)
+  gasSupport          Decimal      @default(0) @map("gas_support") @db.Decimal(14, 4)
+  kpi                 Decimal      @default(0) @db.Decimal(14, 4)
+  medical             Decimal      @default(0) @db.Decimal(14, 4)
+  gosi                Decimal      @default(0) @db.Decimal(14, 4)
+  iqamaRenewal        Decimal      @default(0) @map("iqama_renewal") @db.Decimal(14, 4)
+  exitReentry         Decimal      @default(0) @map("exit_reentry") @db.Decimal(14, 4)
+  flightTicket        Decimal      @default(0) @map("flight_ticket") @db.Decimal(14, 4)
+  iqamaTransfer       Decimal      @default(0) @map("iqama_transfer") @db.Decimal(14, 4)
+  adminFee            Decimal      @default(0) @map("admin_fee") @db.Decimal(14, 4)
+  dependantsFees      Decimal      @default(0) @map("dependants_fees") @db.Decimal(14, 4)
+  ajeer               Decimal      @default(0) @db.Decimal(14, 4)
+  sponsorshipTransfer Decimal      @default(0) @map("sponsorship_transfer") @db.Decimal(14, 4)
+  newVisa             Decimal      @default(0) @map("new_visa") @db.Decimal(14, 4)
+  payout              Decimal      @default(0) @db.Decimal(14, 4)
+  other               Decimal      @default(0) @db.Decimal(14, 4)
+  billEos             Boolean      @default(true) @map("bill_eos")
+  feeModel            BillingModel @map("fee_model")
+  directRate          Decimal?     @map("direct_rate") @db.Decimal(9, 4)
+  indirectRate        Decimal?     @map("indirect_rate") @db.Decimal(9, 4)
+  perHead             Decimal?     @map("per_head") @db.Decimal(14, 2)
+  perDay              Decimal?     @map("per_day") @db.Decimal(14, 2)
+  /// PAYROLL or EXPENSES: which of the client's two monthly invoices this row is on.
+  part                String       @default("PAYROLL")
+  /// The client's service rules when the row was built (see lib/breakdown.ts ServiceRules).
+  rules               Json         @default("{}")
+
+  @@map("invoice_line_breakdowns")
+}
+
+/// One client's setting for one invoice service (a column of the client's breakdown sheet).
+model ClientServiceRule {
+  clientId  String   @map("client_id")
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service   String
+  enabled   Boolean  @default(true)
+  /// PAYROLL (the monthly invoice) or EXPENSES (a separate invoice)
+  part      String   @default("PAYROLL")
+  /// PERCENT (fraction of the amount) or FIXED (amount per employee per month); null uses the contract
+  feeType   String?  @map("fee_type")
+  feeValue  Decimal? @map("fee_value") @db.Decimal(14, 4)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@id([clientId, service])
+  @@map("client_service_rules")
 }

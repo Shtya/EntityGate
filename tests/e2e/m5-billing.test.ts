@@ -45,9 +45,10 @@ async function draftFor(runId: string, clientId: string) {
 describe.skipIf(!BASE || !canManage)("M5: billing", () => {
   it("bills a month to the halala, with proration", async () => {
     const { hr, finance, clientId } = await setup();
-    // Full month in January (31 days): 10,000 cost + 8% = 10,800
+    // The client's method: a full month is 30 days, and end-of-service (salary ÷ 2 ÷ 12) is billed.
+    // Full January: 10,000 + 416.67 EOS = 10,416.67 cost, + 8% = 11,250.00
     await addEmployee(hr, clientId, date(1, 1), "10000");
-    // Joined on the 17th, 15 of 31 days of 6,200: cost 3,000 + 8% = 3,240
+    // Joined on the 17th, 15 days: 6,200 ÷ 30 × 15 = 3,100 + 129.17 EOS = 3,229.17 cost, + 8% = 3,487.50
     await addEmployee(hr, clientId, date(1, 17), "6200");
     // Not started yet: not billed
     await addEmployee(hr, clientId, date(2, 1), "9999");
@@ -58,11 +59,11 @@ describe.skipIf(!BASE || !canManage)("M5: billing", () => {
 
     const inv = await draftFor(run.data.id, clientId);
     expect(inv.status).toBe("DRAFT");
-    expect(inv.lines.map((l) => l.amount.toFixed(2)).sort()).toEqual(["10800.00", "3240.00"]);
-    expect(inv.lines.map((l) => l.costAmount.toFixed(2)).sort()).toEqual(["10000.00", "3000.00"]);
-    expect(inv.subtotal.toFixed(2)).toBe("14040.00");
-    expect(inv.vatAmount.toFixed(2)).toBe("2106.00");
-    expect(inv.total.toFixed(2)).toBe("16146.00");
+    expect(inv.lines.map((l) => l.amount.toFixed(2)).sort()).toEqual(["11250.00", "3487.50"]);
+    expect(inv.lines.map((l) => l.costAmount.toFixed(2)).sort()).toEqual(["10416.67", "3229.17"]);
+    expect(inv.subtotal.toFixed(2)).toBe("14737.50");
+    expect(inv.vatAmount.toFixed(2)).toBe("2210.63");
+    expect(inv.total.toFixed(2)).toBe("16948.13");
     expect(inv.number).toBeNull();
 
     // Must be approved before issuing, and only Finance can (BR-03).
@@ -84,13 +85,13 @@ describe.skipIf(!BASE || !canManage)("M5: billing", () => {
   it("splits pay by day when it changes mid-month, across a client transfer", async () => {
     const { hr, finance, clientId } = await setup();
     const employee = await addEmployee(hr, clientId, date(4, 1), "3000");
-    // April has 30 days: 3,000 for 15 days, then a raise to 6,000 for 15 days. Cost 1,500 + 3,000 = 4,500.
+    // April: 3,000 for 15 days, then 6,000 for 15: salary 4,500 for the month, + 187.50 EOS = 4,687.50 cost.
     await api(hr, `/employees/${employee}/compensation`, "POST", { effectiveFrom: date(4, 16), basic: "6000" });
     const run = await api(finance, "/billing/runs", "POST", { period: period(4) });
     const inv = await draftFor(run.data.id, clientId);
     const line = inv.lines.find((l) => l.employeeId === employee)!;
-    expect(line.costAmount.toFixed(2)).toBe("4500.00");
-    expect(line.amount.toFixed(2)).toBe("4860.00");
+    expect(line.costAmount.toFixed(2)).toBe("4687.50");
+    expect(line.amount.toFixed(2)).toBe("5062.50");
     await api(finance, `/billing/runs/${run.data.id}/cancel`, "POST", {});
   });
 

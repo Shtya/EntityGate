@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optDate, optEmail, optId, optMoney, optText, pageQuery, reqDate, reqId, reqMoney, reqText } from "@/server/validation";
+import { optDate, optEmail, optId, optMoney, optText, pageQuery, reqDate, reqId, reqMoney, reqText, optMoney4 } from "@/server/validation";
 
 export const CLASSIFICATIONS = ["SPONSORED", "NON_SPONSORED", "GOSI"] as const;
 export const EMPLOYEE_STATUSES = ["ONBOARDING", "ACTIVE", "OFFBOARDING", "EXITED"] as const;
@@ -48,6 +48,14 @@ export const compensationSchema = z.object({
   other: optMoney,
   gosiEmployer: optMoney,
   insuranceMonthly: optMoney,
+  // Standing monthly charges billed to the client. A yearly cost goes in as yearly ÷ 12.
+  iqamaRenewal: optMoney4,
+  exitReentry: optMoney4,
+  flightTicket: optMoney4,
+  iqamaTransfer: optMoney4,
+  adminFee: optMoney4,
+  dependantsFees: optMoney4,
+  ajeer: optMoney4,
 });
 export type CompensationInput = z.infer<typeof compensationSchema>;
 

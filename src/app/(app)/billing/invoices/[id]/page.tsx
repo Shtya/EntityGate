@@ -15,6 +15,7 @@ import { Code, DetailList, RecordTable } from "@/components/patterns/record";
 import { Button } from "@/components/ui/button";
 import { Badge, Panel, PanelHeader } from "@/components/ui/misc";
 import { INVOICE_TONE, paymentFields } from "../../shared";
+import { BreakdownPanel } from "./breakdown-panel";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations("meta"))("billing") };
@@ -129,6 +130,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           )}
         </div>
       </div>
+      {(inv.type === "MONTHLY" || inv.type === "MONTHLY_EXPENSES") && <BreakdownPanel invoiceId={id} editable={editable && can(actor, "invoice:create")} total={inv.total.toString()} expenses={inv.type === "MONTHLY_EXPENSES"} />}
     </>
   );
 }

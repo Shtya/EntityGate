@@ -223,15 +223,22 @@ export default async function EmployeePage({ params, searchParams }: { params: P
                   title={t("employees.addCompensation")}
                   endpoint={`/employees/${id}/compensation`}
                   submitLabel={t("common.save")}
-                  initial={{ effectiveFrom: toDateOnly(today) }}
+                  initial={{ effectiveFrom: toDateOnly(today), ...(e.compensations[0] ? Object.fromEntries((["basic", "housing", "transport", "other", "gosiEmployer", "insuranceMonthly", "iqamaRenewal", "exitReentry", "flightTicket", "iqamaTransfer", "adminFee", "dependantsFees", "ajeer"] as const).map((k) => [k, Number(e.compensations[0][k].toString()) ? e.compensations[0][k].toString() : null])) : {}) }}
                   fields={[
                     { name: "effectiveFrom", label: t("clients.effectiveFrom"), type: "date", required: true },
                     { name: "basic", label: t("employees.basic"), type: "money", required: true },
                     { name: "housing", label: t("employees.housing"), type: "money" },
                     { name: "transport", label: t("employees.transport"), type: "money" },
                     { name: "other", label: t("employees.other"), type: "money" },
-                    { name: "gosiEmployer", label: t("employees.gosi"), type: "money" },
+                    { name: "gosiEmployer", label: t("employees.gosi"), type: "money", hint: t("employees.gosiHint") },
                     { name: "insuranceMonthly", label: t("employees.insurance"), type: "money" },
+                    { name: "iqamaRenewal", label: t("charges.iqamaRenewal"), type: "money", hint: t("employees.chargesHint") },
+                    { name: "exitReentry", label: t("charges.exitReentry"), type: "money" },
+                    { name: "flightTicket", label: t("charges.flightTicket"), type: "money" },
+                    { name: "iqamaTransfer", label: t("charges.iqamaTransfer"), type: "money" },
+                    { name: "adminFee", label: t("charges.adminFee"), type: "money" },
+                    { name: "dependantsFees", label: t("charges.dependantsFees"), type: "money" },
+                    { name: "ajeer", label: t("charges.ajeer"), type: "money" },
                   ]}
                 />
               )
@@ -250,6 +257,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
               { header: t("employees.transport"), align: "end", nowrap: true, cell: (c) => money(c.transport) },
               { header: t("employees.gosi"), align: "end", nowrap: true, cell: (c) => money(c.gosiEmployer) },
               { header: t("employees.insurance"), align: "end", nowrap: true, cell: (c) => money(c.insuranceMonthly) },
+              { header: t("employees.monthlyCharges"), align: "end", nowrap: true, hideOnMobile: true, cell: (c) => money(sum(c.iqamaRenewal, c.exitReentry, c.flightTicket, c.iqamaTransfer, c.adminFee, c.dependantsFees, c.ajeer)) },
               { header: t("employees.monthlyCost"), align: "end", nowrap: true, cell: (c) => <span className="font-medium">{money(sum(c.basic, c.housing, c.transport, c.other, c.gosiEmployer, c.insuranceMonthly))}</span> },
             ]}
           />

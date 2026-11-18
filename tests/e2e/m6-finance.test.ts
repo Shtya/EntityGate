@@ -72,11 +72,12 @@ describe.skipIf(!BASE || !canManage)("M6: finance", () => {
     const movedLines = await db.payrollItem.findMany({ where: { payrollRunId: payroll.data.id, employeeId: moved } });
     expect(Object.fromEntries(movedLines.map((l) => [l.clientId, l.totalCost.toFixed(2)]))).toEqual({ [c1]: "3200.00", [c2]: "3000.00" });
 
-    // Revenue: c1 (10,000 + 3,200) × 1.08 + 200 = 14,456. c2: 3,000 × 1.08 = 3,240.
+    // Revenue, on the client's 30-day method with end-of-service billed: c1 = 11,250 (A, full month)
+    // + 3,720 (T, 16 days) + 200 visa = 15,170. c2 = 3,487.50 (T, 15 days).
     const run = await api(finance, "/billing/runs", "POST", { period: period(3) });
     expect(run.status).toBe(201);
     const inv1 = await db.invoice.findFirstOrThrow({ where: { billingRunId: run.data.id, clientId: c1 } });
-    expect(inv1.subtotal.toFixed(2)).toBe("14456.00");
+    expect(inv1.subtotal.toFixed(2)).toBe("15170.00");
     expect((await db.expense.findUniqueOrThrow({ where: { id: e2.data.id } })).billedLineId).not.toBeNull();
 
     // Drafts don't count as revenue.
@@ -91,12 +92,12 @@ describe.skipIf(!BASE || !canManage)("M6: finance", () => {
 
     const after = (await api(finance, `/finance/pnl?from=${period(3)}&to=${period(3)}`)).data;
     const row1 = after.clients.find((r: { id: string }) => r.id === c1).pnl;
-    // Direct cost c1 = 13,200 pay + 300 + 200 = 13,700. Contribution 14,456 − 13,700 = 756.
-    expect(Number(row1.revenue)).toBe(14456);
+    // Direct cost c1 = 13,200 pay + 300 + 200 = 13,700. Contribution 15,170 − 13,700 = 1,470.
+    expect(Number(row1.revenue)).toBe(15170);
     expect(Number(row1.directCost)).toBe(13700);
-    expect(Number(row1.contribution)).toBe(756);
+    expect(Number(row1.contribution)).toBe(1470);
     const row2 = after.clients.find((r: { id: string }) => r.id === c2).pnl;
-    expect(Number(row2.contribution)).toBe(240);
+    expect(Number(row2.contribution)).toBe(487.5);
     expect(Number(after.company.overhead)).toBe(100);
     // Company net = every contribution, less unallocated pay and overhead.
     const sum = after.clients.reduce((a: number, r: { pnl: { contribution: string } }) => a + Number(r.pnl.contribution), 0);

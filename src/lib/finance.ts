@@ -8,7 +8,7 @@
 import { overlapDays, periodBounds } from "./dates";
 import { add, marginRatio, money, prorate, round2, sub, sumRounded, vatOf, type Money, type MoneyInput } from "./money";
 
-export type BillingModel = "COST_PLUS_PERCENT" | "FIXED_PER_HEAD" | "COST_PLUS_FIXED";
+export type BillingModel = "COST_PLUS_PERCENT" | "FIXED_PER_HEAD" | "COST_PLUS_FIXED" | "PER_DAY";
 
 export interface InvoiceTotals {
   subtotal: Money;

@@ -8,7 +8,10 @@ import { listInvoicesQuery } from "@/server/modules/billing/schema";
 import { listInvoices } from "@/server/modules/billing/service";
 import { formatDate, todayDate } from "@/lib/dates";
 import { pnl, recentPeriods } from "@/server/modules/finance/service";
-import { formatMoney, formatPercent } from "@/lib/money";
+import { formatMoney, formatPercent, money } from "@/lib/money";
+import { isDirect, SERVICES } from "@/lib/breakdown";
+import { clientServiceRules } from "@/server/modules/billing/breakdown";
+import { ServiceRulesEditor, type ServiceRow } from "./service-rules";
 import { documentStatus } from "@/lib/workforce";
 import { ActionButton, FormButton } from "@/components/patterns/form-dialog";
 import { Code, RecordLink, RecordTable } from "@/components/patterns/record";
@@ -26,6 +29,7 @@ export function clientExtraTabs(actor: Actor, t: T): { key: string; label: strin
     { key: "employees", label: t("clients.tabs.employees"), show: can(actor, "employee:read") },
     { key: "cases", label: t("meta.cases"), show: can(actor, "case:read") },
     { key: "tasks", label: t("meta.tasks"), show: can(actor, "task:read") },
+    { key: "services", label: t("services.tab"), show: can(actor, "contract:read") },
     { key: "billing", label: t("meta.billing"), show: can(actor, "invoice:read") },
     { key: "finance", label: t("meta.finance"), show: can(actor, "finance:read") },
     { key: "documents", label: t("clients.tabs.documents"), show: can(actor, "document:read") },
@@ -35,6 +39,38 @@ export function clientExtraTabs(actor: Actor, t: T): { key: string; label: strin
 export async function ClientExtraTab({ tab, clientId, actor }: { tab: string; clientId: string; actor: Actor }) {
   const t = await getTranslations();
   const locale = await getLocale();
+
+  if (tab === "services" && can(actor, "contract:read")) {
+    const [rules, contract] = await Promise.all([
+      clientServiceRules(clientId),
+      db.contract.findFirst({ where: { clientId, status: "ACTIVE" }, orderBy: { startDate: "desc" }, include: { rateCards: { where: { effectiveTo: null }, take: 1 } } }),
+    ]);
+    const card = contract?.rateCards[0];
+    const pct = (v: { toString(): string } | null | undefined) => (v ? `${money(v.toString()).times(100).toDecimalPlaces(2).toString()}%` : null);
+    // What "the contract's fee" means for this client, so the choice is concrete.
+    const contractFee = !contract
+      ? t("services.noContract")
+      : contract.billingModel === "COST_PLUS_PERCENT"
+        ? [pct(card?.feePercent), card?.feeIndirectPercent ? pct(card.feeIndirectPercent) : null].filter(Boolean).join(" / ") || "—"
+        : "";
+    const rows: ServiceRow[] = SERVICES.map((s) => {
+      const r = rules[s];
+      return {
+        service: s,
+        direct: isDirect(s),
+        enabled: r?.enabled ?? true,
+        part: r?.part ?? "PAYROLL",
+        feeType: r?.fee?.type ?? "CONTRACT",
+        feeValue: r?.fee ? (r.fee.type === "PERCENT" ? money(String(r.fee.value)).times(100).toDecimalPlaces(4).toString() : money(String(r.fee.value)).toDecimalPlaces(4).toString()) : "",
+      };
+    });
+    return (
+      <Panel>
+        <PanelHeader title={t("services.title")} description={t("services.description")} />
+        <ServiceRulesEditor clientId={clientId} initial={rows} canEdit={can(actor, "contract:manage")} contractFee={contractFee} />
+      </Panel>
+    );
+  }
 
   if (tab === "employees" && can(actor, "employee:read")) {
     const allocations = await db.allocation.findMany({

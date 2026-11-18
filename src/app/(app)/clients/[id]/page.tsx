@@ -45,10 +45,13 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
 
   const rateFields = (): FieldSpec[] => [
     { name: "effectiveFrom", label: t("clients.effectiveFrom"), type: "date", required: true },
-    { name: "feePercent", label: t("clients.feePercent"), type: "money" },
+    { name: "feePercent", label: t("clients.feePercent"), type: "money", hint: t("clients.feePercentHint") },
+    { name: "feeIndirectPercent", label: t("clients.feeIndirectPercent"), type: "money", hint: t("clients.feeIndirectHint") },
     { name: "feePerHead", label: t("clients.feePerHead"), type: "money" },
+    { name: "feePerDay", label: t("clients.feePerDay"), type: "money" },
     { name: "feeFixedMonthly", label: t("clients.feeFixed"), type: "money" },
     { name: "sponsorshipRenewalFee", label: t("clients.renewalFee"), type: "money" },
+    { name: "billEndOfService", label: t("clients.billEos"), type: "checkbox", hint: t("clients.billEosHint") },
   ];
 
   const tabs = [
@@ -124,7 +127,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                   description={t("clients.pricingHint")}
                   endpoint={`/clients/${id}/contracts`}
                   submitLabel={t("clients.addContract")}
-                  initial={{ paymentTermsDays: "30", renewalNoticeDays: "60", vatPercent: "15", billingModel: "COST_PLUS_PERCENT", startDate: toDateOnly(todayDate()) }}
+                  initial={{ paymentTermsDays: "30", renewalNoticeDays: "60", vatPercent: "15", billingModel: "COST_PLUS_PERCENT", billEndOfService: true, startDate: toDateOnly(todayDate()) }}
                   fields={[
                     { name: "number", label: t("clients.number"), required: true, ltr: true },
                     { name: "billingModel", label: t("clients.model"), type: "select", required: true, options: BILLING_MODELS.map((m) => ({ value: m, label: t(`enums.BillingModel.${m}`) })) },
@@ -133,10 +136,13 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                     { name: "paymentTermsDays", label: t("clients.paymentTerms"), type: "number", required: true },
                     { name: "renewalNoticeDays", label: t("clients.renewalNotice"), type: "number", required: true },
                     { name: "vatPercent", label: t("clients.vat"), type: "money", required: true },
-                    { name: "feePercent", label: t("clients.feePercent"), type: "money" },
+                    { name: "feePercent", label: t("clients.feePercent"), type: "money", hint: t("clients.feePercentHint") },
+                    { name: "feeIndirectPercent", label: t("clients.feeIndirectPercent"), type: "money", hint: t("clients.feeIndirectHint") },
                     { name: "feePerHead", label: t("clients.feePerHead"), type: "money" },
+                    { name: "feePerDay", label: t("clients.feePerDay"), type: "money" },
                     { name: "feeFixedMonthly", label: t("clients.feeFixed"), type: "money" },
                     { name: "sponsorshipRenewalFee", label: t("clients.renewalFee"), type: "money" },
+                    { name: "billEndOfService", label: t("clients.billEos"), type: "checkbox", hint: t("clients.billEosHint") },
                   ]}
                 />
               )
@@ -158,7 +164,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                       </span>
                       {can(actor, "contract:manage") && c.status === "ACTIVE" && (
                         <span className="ms-auto flex gap-2">
-                          <FormButton variant="secondary" size="sm" label={t("clients.newRate")} title={t("clients.newRate")} description={t("enums.BillingModel." + c.billingModel)} fields={rateFields()} endpoint={`/contracts/${c.id}/rate-cards`} submitLabel={t("common.save")} successMessage={t("clients.rateSaved")} />
+                          <FormButton variant="secondary" size="sm" label={t("clients.newRate")} title={t("clients.newRate")} description={t("enums.BillingModel." + c.billingModel)} fields={rateFields()} endpoint={`/contracts/${c.id}/rate-cards`} initial={{ effectiveFrom: toDateOnly(todayDate()), feePercent: rate?.feePercent ? fractionToPercent(rate.feePercent.toString()) : null, feeIndirectPercent: rate?.feeIndirectPercent ? fractionToPercent(rate.feeIndirectPercent.toString()) : null, feePerHead: rate?.feePerHead?.toString() ?? null, feePerDay: rate?.feePerDay?.toString() ?? null, feeFixedMonthly: rate?.feeFixedMonthly?.toString() ?? null, sponsorshipRenewalFee: rate?.sponsorshipRenewalFee?.toString() ?? null, billEndOfService: rate?.billEndOfService ?? true }} submitLabel={t("common.save")} successMessage={t("clients.rateSaved")} />
                           <ActionButton label={t("clients.terminate")} variant="danger" endpoint={`/contracts/${c.id}/status`} json={{ status: "TERMINATED" }} confirm={t("clients.terminateConfirm")} confirmBody={t("clients.terminateBody")} />
                         </span>
                       )}
@@ -167,6 +173,9 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                       <div><dt className="text-xs text-faint">{t("clients.model")}</dt><dd>{t(`enums.BillingModel.${c.billingModel}`)}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.paymentTerms")}</dt><dd className="num">{c.paymentTermsDays}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feePercent")}</dt><dd className="num">{rate?.feePercent ? `${fractionToPercent(rate.feePercent.toString())}%` : "—"}</dd></div>
+                      <div><dt className="text-xs text-faint">{t("clients.feeIndirectPercent")}</dt><dd className="num">{rate?.feeIndirectPercent ? `${fractionToPercent(rate.feeIndirectPercent.toString())}%` : rate?.feePercent ? t("clients.sameAsDirect") : "—"}</dd></div>
+                      <div><dt className="text-xs text-faint">{t("clients.feePerDay")}</dt><dd className="num">{money(rate?.feePerDay)}</dd></div>
+                      <div><dt className="text-xs text-faint">{t("clients.billEos")}</dt><dd>{rate ? t(rate.billEndOfService ? "common.yes" : "common.no") : "—"}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feePerHead")}</dt><dd className="num">{money(rate?.feePerHead)}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feeFixed")}</dt><dd className="num">{money(rate?.feeFixedMonthly)}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.renewalFee")}</dt><dd className="num">{money(rate?.sponsorshipRenewalFee)}</dd></div>

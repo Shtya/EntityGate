@@ -20,6 +20,13 @@ export const optDate = z.string().refine(isDate, "validation.date").nullish();
 export const reqMoney = z.string({ error: "validation.required" }).trim().regex(/^\d{1,12}(\.\d{1,2})?$/, "validation.money");
 export const optMoney = z.string().trim().regex(/^\d{1,12}(\.\d{1,2})?$/, "validation.money").nullish();
 /** A percentage typed as 8 or 8.5, stored as a fraction by the service. */
+/** Money with up to four decimals, for monthly shares of yearly costs (2000 ÷ 12 = 166.6667). */
+export const optMoney4 = z
+  .union([z.string(), z.number()])
+  .transform((v) => String(v).trim().replace(/,/g, ""))
+  .pipe(z.string().regex(/^(\d{1,10}(\.\d{1,4})?)?$/, "validation.money"))
+  .transform((v) => (v === "" ? null : v))
+  .nullish();
 export const optPercent = z.string().trim().regex(/^\d{1,3}(\.\d{1,4})?$/, "validation.percent").nullish();
 export const reqInt = z.coerce.number({ error: "validation.required" }).int("validation.number").min(0, "validation.number").max(100000, "validation.number");
 export const period = z.string({ error: "validation.required" }).regex(/^\d{4}-(0[1-9]|1[0-2])$/, "validation.period");

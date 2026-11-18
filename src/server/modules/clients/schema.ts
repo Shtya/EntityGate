@@ -2,7 +2,7 @@ import { z } from "zod";
 import { optDate, optEmail, optMoney, optPercent, optText, pageQuery, reqDate, reqId, reqInt, reqText } from "@/server/validation";
 
 export const CLIENT_STATUSES = ["PROSPECT", "ONBOARDING", "ACTIVE", "SUSPENDED", "EXITED"] as const;
-export const BILLING_MODELS = ["COST_PLUS_PERCENT", "FIXED_PER_HEAD", "COST_PLUS_FIXED"] as const;
+export const BILLING_MODELS = ["COST_PLUS_PERCENT", "FIXED_PER_HEAD", "PER_DAY", "COST_PLUS_FIXED"] as const;
 export const CONTRACT_STATUSES = ["DRAFT", "ACTIVE", "EXPIRED", "TERMINATED"] as const;
 
 export const clientSchema = z.object({
@@ -35,9 +35,13 @@ export const contactSchema = z.object({
 
 const pricing = {
   feePercent: optPercent,
+  /** Fee on indirect costs (EOS, GOSI, iqama...). Blank means the same as on direct costs. */
+  feeIndirectPercent: optPercent,
   feePerHead: optMoney,
+  feePerDay: optMoney,
   feeFixedMonthly: optMoney,
   sponsorshipRenewalFee: optMoney,
+  billEndOfService: z.boolean().nullish(),
 };
 
 export const contractSchema = z.object({

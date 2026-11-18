@@ -167,15 +167,21 @@ export async function removeContact(actor: Actor, clientId: string, contactId: s
   return { id: clientId };
 }
 
-const pricing = (i: { feePercent?: string | null; feePerHead?: string | null; feeFixedMonthly?: string | null; sponsorshipRenewalFee?: string | null }) => ({
+type Pricing = { feePercent?: string | null; feeIndirectPercent?: string | null; feePerHead?: string | null; feePerDay?: string | null; feeFixedMonthly?: string | null; sponsorshipRenewalFee?: string | null; billEndOfService?: boolean | null };
+const pricing = (i: Pricing) => ({
   feePercent: percentToFraction(i.feePercent),
+  feeIndirectPercent: percentToFraction(i.feeIndirectPercent),
   feePerHead: i.feePerHead ?? null,
+  feePerDay: i.feePerDay ?? null,
   feeFixedMonthly: i.feeFixedMonthly ?? null,
   sponsorshipRenewalFee: i.sponsorshipRenewalFee ?? null,
+  // On unless someone turns it off: the client's sheet bills end-of-service every month.
+  billEndOfService: i.billEndOfService ?? true,
 });
 
 /** A billing model is useless without the fee it needs, and a bad contract corrupts every invoice after it. */
-function assertPricing(model: string, i: { feePercent?: string | null; feePerHead?: string | null; feeFixedMonthly?: string | null }) {
+function assertPricing(model: string, i: Pricing) {
+  if (model === "PER_DAY" && !i.feePerDay) throw invalid("errors.validation", [{ path: "feePerDay", message: "validation.required" }]);
   if (model === "COST_PLUS_PERCENT" && !i.feePercent) throw invalid("errors.validation", [{ path: "feePercent", message: "validation.required" }]);
   if (model === "FIXED_PER_HEAD" && !i.feePerHead) throw invalid("errors.validation", [{ path: "feePerHead", message: "validation.required" }]);
   if (model === "COST_PLUS_FIXED" && !i.feeFixedMonthly) throw invalid("errors.validation", [{ path: "feeFixedMonthly", message: "validation.required" }]);

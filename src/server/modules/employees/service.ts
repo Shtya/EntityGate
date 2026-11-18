@@ -236,6 +236,13 @@ export async function addCompensation(actor: Actor, employeeId: string, input: C
         other: input.other ?? "0",
         gosiEmployer: input.gosiEmployer ?? "0",
         insuranceMonthly: input.insuranceMonthly ?? "0",
+        iqamaRenewal: input.iqamaRenewal ?? "0",
+        exitReentry: input.exitReentry ?? "0",
+        flightTicket: input.flightTicket ?? "0",
+        iqamaTransfer: input.iqamaTransfer ?? "0",
+        adminFee: input.adminFee ?? "0",
+        dependantsFees: input.dependantsFees ?? "0",
+        ajeer: input.ajeer ?? "0",
       },
     });
     // The fact of the change is audited; amounts stay out of the log, which more roles can read.
