@@ -37,6 +37,9 @@ const pricing = {
   feePercent: optPercent,
   /** Fee on indirect costs (EOS, GOSI, iqama...). Blank means the same as on direct costs. */
   feeIndirectPercent: optPercent,
+  /** Rates for employees on the client's own sponsorship. Blank means the rates above. */
+  clientSponsorFeePercent: optPercent,
+  clientSponsorFeeIndirectPercent: optPercent,
   feePerHead: optMoney,
   feePerDay: optMoney,
   feeFixedMonthly: optMoney,

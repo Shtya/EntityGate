@@ -167,10 +167,12 @@ export async function removeContact(actor: Actor, clientId: string, contactId: s
   return { id: clientId };
 }
 
-type Pricing = { feePercent?: string | null; feeIndirectPercent?: string | null; feePerHead?: string | null; feePerDay?: string | null; feeFixedMonthly?: string | null; sponsorshipRenewalFee?: string | null; billEndOfService?: boolean | null };
+type Pricing = { feePercent?: string | null; feeIndirectPercent?: string | null; clientSponsorFeePercent?: string | null; clientSponsorFeeIndirectPercent?: string | null; feePerHead?: string | null; feePerDay?: string | null; feeFixedMonthly?: string | null; sponsorshipRenewalFee?: string | null; billEndOfService?: boolean | null };
 const pricing = (i: Pricing) => ({
   feePercent: percentToFraction(i.feePercent),
   feeIndirectPercent: percentToFraction(i.feeIndirectPercent),
+  clientSponsorFeePercent: percentToFraction(i.clientSponsorFeePercent),
+  clientSponsorFeeIndirectPercent: percentToFraction(i.clientSponsorFeeIndirectPercent),
   feePerHead: i.feePerHead ?? null,
   feePerDay: i.feePerDay ?? null,
   feeFixedMonthly: i.feeFixedMonthly ?? null,

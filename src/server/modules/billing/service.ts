@@ -32,7 +32,7 @@ async function assertAccess(clientId: string) {
 type RunWarning = { client: string; employee: string; kind: "noPay" };
 
 type RunContract = Prisma.ContractGetPayload<{ include: { rateCards: true; client: { select: { id: true; displayName: true } } } }>;
-type RunAllocation = Prisma.AllocationGetPayload<{ include: { location: { select: { region: { select: { name: true } } } }; employee: { select: { id: true; nameEn: true; joinedAt: true; compensations: true } } } }>;
+type RunAllocation = Prisma.AllocationGetPayload<{ include: { location: { select: { region: { select: { name: true } } } }; employee: { select: { id: true; nameEn: true; joinedAt: true; classification: true; sponsor: { select: { type: true } }; compensations: true } } } }>;
 type RunExpense = Prisma.ExpenseGetPayload<object>;
 
 /**
@@ -133,7 +133,7 @@ export async function createBillingRun(actor: Actor, period: string) {
       const [allocations, expenses, ruleRows] = await Promise.all([
         tx.allocation.findMany({
           where: { clientId: { in: clientIds }, billable: true, effectiveFrom: { lt: end }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: start } }] },
-          include: { location: { select: { region: { select: { name: true } } } }, employee: { select: { id: true, nameEn: true, joinedAt: true, compensations: true } } },
+          include: { location: { select: { region: { select: { name: true } } } }, employee: { select: { id: true, nameEn: true, joinedAt: true, classification: true, sponsor: { select: { type: true } }, compensations: true } } },
           orderBy: { employee: { nameEn: "asc" } },
         }),
         tx.expense.findMany({ where: { clientId: { in: clientIds }, recoverable: true, status: "APPROVED", billedLineId: null, incurredAt: { lt: end } }, orderBy: { incurredAt: "asc" } }),

@@ -65,8 +65,8 @@ describe.skipIf(!BASE || !canManage)("invoice breakdown from the client's sheet"
     await wb.xlsx.load((await file.arrayBuffer()) as never);
     const ws = wb.worksheets[0];
     expect(ws.getRow(2).getCell(2).value).toBe("Employee Name");
-    expect(ws.getRow(2).getCell(28).value).toBe("Service fee 11%");
-    expect(ws.getRow(3).getCell(29).value).toBe(38598.65);
+    expect(ws.getRow(2).getCell(29).value).toBe("Service fee 11%");
+    expect(ws.getRow(3).getCell(30).value).toBe(38598.65);
     expect(ws.getRow(4).getCell(1).value).toBe("Total-SAR");
     expect(ws.getRow(5).getCell(1).value).toBe("Total-USD");
 

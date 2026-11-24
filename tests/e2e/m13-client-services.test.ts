@@ -75,4 +75,32 @@ describe.skipIf(!BASE || !canManage)("each client's services", () => {
     expect((await db.invoice.findUniqueOrThrow({ where: { id: payroll.id } })).total.toFixed(2)).toBe("11445.00");
     await api(finance, `/billing/runs/${run.data.id}/cancel`, "POST", {});
   });
+  it("bills employees on the client's own sponsorship at the client's rates (Al-Esayi: 9%/9% and 13%/0%)", async () => {
+    const head = await session.head();
+    const hr = await session.hr();
+    const finance = await session.finance();
+    const owner = await db.user.findUniqueOrThrow({ where: { email: "am1@entitygate.test" } });
+    const clientId = (await api(head, "/clients", "POST", { displayName: `E2E ${uniq()}`, legalName: "E2E" })).data.id as string;
+    await api(head, `/clients/${clientId}/assignments`, "POST", { userId: owner.id, role: "OWNER", effectiveFrom: "2026-01-01" });
+    await api(head, `/clients/${clientId}/status`, "POST", { status: "ONBOARDING" });
+    const c = await api(finance, `/clients/${clientId}/contracts`, "POST", { number: `C-${uniq()}`, startDate: "2026-01-01", billingModel: "COST_PLUS_PERCENT", paymentTermsDays: 30, renewalNoticeDays: 60, vatPercent: "0", feePercent: "9", feeIndirectPercent: "9", clientSponsorFeePercent: "13", clientSponsorFeeIndirectPercent: "0" });
+    expect(c.status).toBe(201);
+    expect((await api(head, `/clients/${clientId}/status`, "POST", { status: "ACTIVE" })).status).toBe(200);
+    const hire = async (classification: string) => {
+      const id = (await api(hr, "/employees", "POST", { nameEn: `E2E ${uniq()}`, classification, clientId, effectiveFrom: "2026-01-01" })).data.id as string;
+      await api(hr, `/employees/${id}/compensation`, "POST", { effectiveFrom: "2026-01-01", basic: "10000", gosiEmployer: "200", adminFee: "300" });
+      return id;
+    };
+    const ours = await hire("SPONSORED");
+    const theirs = await hire("NON_SPONSORED");
+    const run = await api(finance, "/billing/runs", "POST", { period: period(7) });
+    expect(run.status).toBe(201);
+    const line = (employeeId: string) => db.invoiceLine.findFirstOrThrow({ where: { employeeId, invoice: { billingRunId: run.data.id } }, include: { breakdown: true } });
+    const a = await line(ours);
+    const b = await line(theirs);
+    // Indirect = EOS 416.67 + GOSI 200 + admin 300 = 916.67.
+    expect([a.amount.toFixed(2), a.breakdown!.ownSponsorship]).toEqual(["11899.17", true]); // 10,916.67 × 1.09
+    expect([b.amount.toFixed(2), b.breakdown!.ownSponsorship]).toEqual(["12216.67", false]); // 10,000 × 1.13 + 916.67
+    await api(finance, `/billing/runs/${run.data.id}/cancel`, "POST", {});
+  });
 });

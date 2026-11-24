@@ -472,6 +472,9 @@ model RateCard {
   feeIndirectPercent    Decimal?  @map("fee_indirect_percent") @db.Decimal(9, 4)
   feePerDay             Decimal?  @map("fee_per_day") @db.Decimal(14, 2)
   billEndOfService      Boolean   @default(true) @map("bill_end_of_service")
+  /// Rates for employees on the client's own sponsorship (not ours). Null means the main rates.
+  clientSponsorFeePercent         Decimal? @map("client_sponsor_fee_percent") @db.Decimal(9, 4)
+  clientSponsorFeeIndirectPercent Decimal? @map("client_sponsor_fee_indirect_percent") @db.Decimal(9, 4)
   /// Which cost components are billed through (true) vs absorbed: {"gosi":true,"insurance":true,...}
   includes              Json      @default("{}")
   createdAt             DateTime  @default(now()) @map("created_at")
@@ -1498,6 +1501,8 @@ model InvoiceLineBreakdown {
   perDay              Decimal?     @map("per_day") @db.Decimal(14, 2)
   /// PAYROLL or EXPENSES: which of the client's two monthly invoices this row is on.
   part                String       @default("PAYROLL")
+  /// On our sponsorship (true) or the client's (false): which rates were used.
+  ownSponsorship      Boolean      @default(true) @map("own_sponsorship")
   /// The client's service rules when the row was built (see lib/breakdown.ts ServiceRules).
   rules               Json         @default("{}")
 

@@ -928,7 +928,11 @@
     "feePerDay": "Fee per day worked",
     "sameAsDirect": "Same as direct",
     "billEos": "Bill end-of-service monthly",
-    "billEosHint": "Half a month's salary per year, billed as salary ÷ 2 ÷ 12 each month."
+    "billEosHint": "Half a month's salary per year, billed as salary ÷ 2 ÷ 12 each month.",
+    "clientSponsorFeePercent": "Client's sponsorship: fee on direct costs (%)",
+    "clientSponsorFeeIndirectPercent": "Client's sponsorship: fee on indirect costs (%)",
+    "clientSponsorHint": "For employees on the client's own sponsorship, if their rates differ (Al-Esayi: 13% and 0%). Blank means the rates above.",
+    "clientSponsorRates": "Client's sponsorship rates"
   },
   "employees": {
     "title": "Employees",
@@ -1600,7 +1604,9 @@
     "oneOffHint": "One-off charges for this month, billed in full.",
     "editHint": "Changes recalculate this employee's line and the invoice totals.",
     "saved": "Breakdown updated",
-    "titleExpenses": "Expenses breakdown by employee"
+    "titleExpenses": "Expenses breakdown by employee",
+    "ourSponsorship": "On our sponsorship",
+    "clientSponsorship": "On the client's sponsorship"
   },
   "services": {
     "tab": "Services",

@@ -99,8 +99,14 @@ const FIELD_SERVICE: Record<Editable, Service> = {
 /** The take-home part of a pay record: what the sheet calls "Take Home Salary". */
 const takeHome = (c: Pick<Compensation, "basic" | "housing" | "transport" | "other">) => add(c.basic.toString(), c.housing.toString(), c.transport.toString(), c.other.toString());
 
-type Card = { feePercent: Prisma.Decimal | null; feeIndirectPercent: Prisma.Decimal | null; feePerHead: Prisma.Decimal | null; feePerDay: Prisma.Decimal | null; billEndOfService: boolean };
-type Placement = { id: string; effectiveFrom: Date; effectiveTo: Date | null; location: { region: { name: string } } | null; employee: { id: string; nameEn: string; joinedAt: Date | null; compensations: Compensation[] } };
+type Card = { feePercent: Prisma.Decimal | null; feeIndirectPercent: Prisma.Decimal | null; clientSponsorFeePercent: Prisma.Decimal | null; clientSponsorFeeIndirectPercent: Prisma.Decimal | null; feePerHead: Prisma.Decimal | null; feePerDay: Prisma.Decimal | null; billEndOfService: boolean };
+type Placement = { id: string; effectiveFrom: Date; effectiveTo: Date | null; location: { region: { name: string } } | null; employee: { id: string; nameEn: string; joinedAt: Date | null; classification: string; sponsor: { type: string } | null; compensations: Compensation[] } };
+
+/**
+ * On our sponsorship: classified as sponsored, and the sponsor is our company (or not recorded).
+ * Everyone else is on the client's sponsorship, which can carry its own rates (client, 24 Nov).
+ */
+export const onOurSponsorship = (e: { classification: string; sponsor: { type: string } | null }) => e.classification === "SPONSORED" && (e.sponsor?.type ?? "OWN") === "OWN";
 
 /**
  * One employee's row for a month and one of the client's invoices: salary weighted across any pay
@@ -139,6 +145,10 @@ export function placementRow(a: Placement, period: string, model: FeeModel, card
       }
     : {};
   const workdays = billedWorkdays(daysActive, days);
+  const ours = onOurSponsorship(a.employee);
+  // The client's-sponsorship rates fill in only what's set; anything blank falls back to the main rates.
+  const directRate = ours ? card.feePercent : (card.clientSponsorFeePercent ?? card.feePercent);
+  const indirectRate = ours ? card.feeIndirectPercent : (card.clientSponsorFeeIndirectPercent ?? card.clientSponsorFeePercent ?? card.feeIndirectPercent);
   const data = {
     employeeName: a.employee.nameEn,
     region: a.location?.region.name ?? null,
@@ -148,8 +158,9 @@ export function placementRow(a: Placement, period: string, model: FeeModel, card
     ...charges,
     billEos: card.billEndOfService,
     feeModel: model,
-    directRate: card.feePercent?.toString() ?? null,
-    indirectRate: card.feeIndirectPercent?.toString() ?? null,
+    directRate: directRate?.toString() ?? null,
+    indirectRate: indirectRate?.toString() ?? null,
+    ownSponsorship: ours,
     perHead: card.feePerHead?.toString() ?? null,
     perDay: card.feePerDay?.toString() ?? null,
     part,

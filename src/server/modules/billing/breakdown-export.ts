@@ -53,6 +53,7 @@ export async function breakdownWorkbook(actor: Actor, invoiceId: string) {
     { heading: "Employee Name", sum: false, usd: false, value: (r) => r.stored.employeeName },
     { heading: "Region", sum: false, usd: false, value: (r) => r.stored.region },
     { heading: "ID Number", sum: false, usd: false, value: (r) => { const id = r.employeeId ? iqama.get(r.employeeId) : null; return id ? (sensitive ? id : mask(id)) : null; } },
+    { heading: "Sponsorship", sum: false, usd: false, value: (r) => (r.stored.ownSponsorship ? "Ours" : "Client") },
     { heading: "Joining Date", sum: false, usd: false, value: (r) => (r.stored.joinedAt ? toDateOnly(r.stored.joinedAt) : null) },
     ...(has("salary") ? [{ heading: "Take Home Salary", sum: true, usd: true, value: (r: Row) => n(money(r.stored.salary.toString())) }] : []),
     { heading: "Workdays", sum: true, usd: false, value: (r) => Number(r.stored.workdays) },
@@ -118,8 +119,8 @@ export async function breakdownWorkbook(actor: Actor, invoiceId: string) {
     sar.getCell(idx + 1).value = i ? { formula: `SUM(${letter}${first}:${letter}${last})` } : 0;
     if (c.usd) usd.getCell(idx + 1).value = { formula: `${letter}${sar.number}/${SAR_PER_USD}` };
   });
-  ws.mergeCells(sar.number, 1, sar.number, 5);
-  ws.mergeCells(usd.number, 1, usd.number, 5);
+  ws.mergeCells(sar.number, 1, sar.number, 6);
+  ws.mergeCells(usd.number, 1, usd.number, 6);
   for (const r of [sar, usd]) {
     r.font = { bold: true };
     r.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE0EEF2" } };
@@ -130,7 +131,7 @@ export async function breakdownWorkbook(actor: Actor, invoiceId: string) {
   columns.forEach((c, idx) => {
     if (idx < 2) return;
     const column = ws.getColumn(idx + 1);
-    column.width = idx <= 4 ? 14 : 13;
+    column.width = idx <= 5 ? 14 : 13;
     if (c.usd) column.numFmt = "#,##0.00";
   });
   return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), filename: `${invoice.number ?? "draft"}-${kind.toLowerCase()}-breakdown.xlsx` };

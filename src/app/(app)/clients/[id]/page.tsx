@@ -47,6 +47,8 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
     { name: "effectiveFrom", label: t("clients.effectiveFrom"), type: "date", required: true },
     { name: "feePercent", label: t("clients.feePercent"), type: "money", hint: t("clients.feePercentHint") },
     { name: "feeIndirectPercent", label: t("clients.feeIndirectPercent"), type: "money", hint: t("clients.feeIndirectHint") },
+    { name: "clientSponsorFeePercent", label: t("clients.clientSponsorFeePercent"), type: "money", hint: t("clients.clientSponsorHint") },
+    { name: "clientSponsorFeeIndirectPercent", label: t("clients.clientSponsorFeeIndirectPercent"), type: "money" },
     { name: "feePerHead", label: t("clients.feePerHead"), type: "money" },
     { name: "feePerDay", label: t("clients.feePerDay"), type: "money" },
     { name: "feeFixedMonthly", label: t("clients.feeFixed"), type: "money" },
@@ -138,6 +140,8 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                     { name: "vatPercent", label: t("clients.vat"), type: "money", required: true },
                     { name: "feePercent", label: t("clients.feePercent"), type: "money", hint: t("clients.feePercentHint") },
                     { name: "feeIndirectPercent", label: t("clients.feeIndirectPercent"), type: "money", hint: t("clients.feeIndirectHint") },
+                    { name: "clientSponsorFeePercent", label: t("clients.clientSponsorFeePercent"), type: "money", hint: t("clients.clientSponsorHint") },
+                    { name: "clientSponsorFeeIndirectPercent", label: t("clients.clientSponsorFeeIndirectPercent"), type: "money" },
                     { name: "feePerHead", label: t("clients.feePerHead"), type: "money" },
                     { name: "feePerDay", label: t("clients.feePerDay"), type: "money" },
                     { name: "feeFixedMonthly", label: t("clients.feeFixed"), type: "money" },
@@ -164,7 +168,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                       </span>
                       {can(actor, "contract:manage") && c.status === "ACTIVE" && (
                         <span className="ms-auto flex gap-2">
-                          <FormButton variant="secondary" size="sm" label={t("clients.newRate")} title={t("clients.newRate")} description={t("enums.BillingModel." + c.billingModel)} fields={rateFields()} endpoint={`/contracts/${c.id}/rate-cards`} initial={{ effectiveFrom: toDateOnly(todayDate()), feePercent: rate?.feePercent ? fractionToPercent(rate.feePercent.toString()) : null, feeIndirectPercent: rate?.feeIndirectPercent ? fractionToPercent(rate.feeIndirectPercent.toString()) : null, feePerHead: rate?.feePerHead?.toString() ?? null, feePerDay: rate?.feePerDay?.toString() ?? null, feeFixedMonthly: rate?.feeFixedMonthly?.toString() ?? null, sponsorshipRenewalFee: rate?.sponsorshipRenewalFee?.toString() ?? null, billEndOfService: rate?.billEndOfService ?? true }} submitLabel={t("common.save")} successMessage={t("clients.rateSaved")} />
+                          <FormButton variant="secondary" size="sm" label={t("clients.newRate")} title={t("clients.newRate")} description={t("enums.BillingModel." + c.billingModel)} fields={rateFields()} endpoint={`/contracts/${c.id}/rate-cards`} initial={{ effectiveFrom: toDateOnly(todayDate()), feePercent: rate?.feePercent ? fractionToPercent(rate.feePercent.toString()) : null, feeIndirectPercent: rate?.feeIndirectPercent ? fractionToPercent(rate.feeIndirectPercent.toString()) : null, clientSponsorFeePercent: rate?.clientSponsorFeePercent ? fractionToPercent(rate.clientSponsorFeePercent.toString()) : null, clientSponsorFeeIndirectPercent: rate?.clientSponsorFeeIndirectPercent ? fractionToPercent(rate.clientSponsorFeeIndirectPercent.toString()) : null, feePerHead: rate?.feePerHead?.toString() ?? null, feePerDay: rate?.feePerDay?.toString() ?? null, feeFixedMonthly: rate?.feeFixedMonthly?.toString() ?? null, sponsorshipRenewalFee: rate?.sponsorshipRenewalFee?.toString() ?? null, billEndOfService: rate?.billEndOfService ?? true }} submitLabel={t("common.save")} successMessage={t("clients.rateSaved")} />
                           <ActionButton label={t("clients.terminate")} variant="danger" endpoint={`/contracts/${c.id}/status`} json={{ status: "TERMINATED" }} confirm={t("clients.terminateConfirm")} confirmBody={t("clients.terminateBody")} />
                         </span>
                       )}
@@ -174,6 +178,9 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                       <div><dt className="text-xs text-faint">{t("clients.paymentTerms")}</dt><dd className="num">{c.paymentTermsDays}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feePercent")}</dt><dd className="num">{rate?.feePercent ? `${fractionToPercent(rate.feePercent.toString())}%` : "—"}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feeIndirectPercent")}</dt><dd className="num">{rate?.feeIndirectPercent ? `${fractionToPercent(rate.feeIndirectPercent.toString())}%` : rate?.feePercent ? t("clients.sameAsDirect") : "—"}</dd></div>
+                      {(rate?.clientSponsorFeePercent || rate?.clientSponsorFeeIndirectPercent) && (
+                        <div className="sm:col-span-2"><dt className="text-xs text-faint">{t("clients.clientSponsorRates")}</dt><dd className="num">{[rate?.clientSponsorFeePercent ?? rate?.feePercent, rate?.clientSponsorFeeIndirectPercent ?? rate?.clientSponsorFeePercent ?? rate?.feeIndirectPercent ?? rate?.feePercent].map((v) => (v ? `${fractionToPercent(v.toString())}%` : "—")).join(" / ")}</dd></div>
+                      )}
                       <div><dt className="text-xs text-faint">{t("clients.feePerDay")}</dt><dd className="num">{money(rate?.feePerDay)}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.billEos")}</dt><dd>{rate ? t(rate.billEndOfService ? "common.yes" : "common.no") : "—"}</dd></div>
                       <div><dt className="text-xs text-faint">{t("clients.feePerHead")}</dt><dd className="num">{money(rate?.feePerHead)}</dd></div>

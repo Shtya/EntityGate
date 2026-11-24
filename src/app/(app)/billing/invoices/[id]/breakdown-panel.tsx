@@ -52,7 +52,7 @@ export async function BreakdownPanel({ invoiceId, editable, total, expenses }: {
         emptyTitle=""
         minWidth={showDirect ? 880 : 640}
         columns={[
-          { header: t("finance.employee"), cell: (r) => <span><span className="block font-medium">{r.stored.employeeName}</span>{r.stored.region && <span className="block text-xs text-muted">{r.stored.region}</span>}</span> },
+          { header: t("finance.employee"), cell: (r) => <span><span className="block font-medium">{r.stored.employeeName}</span><span className="block text-xs text-muted">{[t(r.stored.ownSponsorship ? "breakdown.ourSponsorship" : "breakdown.clientSponsorship"), r.stored.region].filter(Boolean).join(" · ")}</span></span> },
           ...(services.includes("salary") ? [{ header: t("breakdown.salary"), align: "end" as const, nowrap: true, cell: (r: (typeof rows)[number]) => m(money(r.stored.salary.toString()).toDecimalPlaces(2)) }] : []),
           { header: t("breakdown.workdays"), align: "end", cell: (r) => <span className="num">{Number(r.stored.workdays)}</span> },
           ...(showDirect ? [{ header: t("breakdown.direct"), align: "end" as const, nowrap: true, cell: (r: (typeof rows)[number]) => m(r.calc.directTotal.toDecimalPlaces(2)) }] : []),
